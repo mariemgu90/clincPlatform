@@ -1,0 +1,13 @@
+{
+  "Header": "src/components/Header.jsx",
+  "Sidebar": "src/components/Sidebar.jsx",
+  "Button": "src/components/Button.jsx",
+  "PatientCard": "src/components/PatientCard.jsx",
+  "AppointmentCard": "src/components/AppointmentCard.jsx",
+  "CalendarView": "src/components/CalendarView.jsx",
+  "PatientList": "src/components/PatientList.jsx",
+  "PatientProfile": "src/components/PatientProfile.jsx",
+  "ConsultationEditor": "src/components/ConsultationEditor.jsx",
+  "PrescriptionViewer": "src/components/PrescriptionViewer.jsx",
+  "InvoiceList": "src/components/InvoiceList.jsx"
+}

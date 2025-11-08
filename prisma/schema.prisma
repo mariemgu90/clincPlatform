@@ -1,0 +1,403 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User roles enum
+enum UserRole {
+  ADMIN
+  DOCTOR
+  RECEPTIONIST
+  PATIENT
+}
+
+// Appointment status enum
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// Invoice status enum
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// User model - handles authentication and role-based access
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  password      String
+  role          UserRole  @default(PATIENT)
+  image         String?
+  phone         String?
+  
+  // Relationships
+  clinicId      String?
+  clinic        Clinic?   @relation(fields: [clinicId], references: [id])
+  
+  // Role-specific relationships
+  patient       Patient?
+  appointments  Appointment[] @relation("DoctorAppointments")
+  consultations Consultation[]
+  prescriptions Prescription[] @relation("DoctorPrescriptions")
+  
+  // Auth
+  accounts      Account[]
+  sessions      Session[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([email])
+  @@index([clinicId])
+}
+
+// Clinic model - multi-tenant support
+model Clinic {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  phone       String?
+  email       String?
+  logo        String?
+  settings    Json?    // JSON for clinic-specific settings
+  
+  // Relationships
+  users       User[]
+  patients    Patient[]
+  appointments Appointment[]
+  services    Service[]
+  invoices    Invoice[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([name])
+}
+
+// Patient model
+model Patient {
+  id              String    @id @default(cuid())
+  
+  // User relationship (optional - for registered patients)
+  userId          String?   @unique
+  user            User?     @relation(fields: [userId], references: [id])
+  
+  // Basic info
+  firstName       String
+  lastName        String
+  dateOfBirth     DateTime
+  gender          String?
+  bloodType       String?
+  
+  // Contact info
+  email           String?
+  phone           String
+  address         String?
+  emergencyContact String?
+  emergencyPhone  String?
+  
+  // Medical info
+  medicalHistory  String?
+  allergies       String?
+  currentMedications String?
+  
+  // Clinic relationship
+  clinicId        String
+  clinic          Clinic    @relation(fields: [clinicId], references: [id])
+  
+  // Relationships
+  appointments    Appointment[]
+  consultations   Consultation[]
+  prescriptions   Prescription[]
+  invoices        Invoice[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([clinicId])
+  @@index([email])
+  @@index([phone])
+}
+
+// Service model - medical services offered
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int      // Duration in minutes
+  price       Float
+  active      Boolean  @default(true)
+  
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  
+  appointments Appointment[]
+  invoiceItems InvoiceItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([clinicId])
+}
+
+// Role model - custom staff roles with permissions
+model Role {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String   @default("blue") // For UI color coding
+  
+  // Relationships
+  permissions RolePermission[]
+  staffCount  Int      @default(0) // Computed field for UI
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([name])
+}
+
+// Permission model - granular permissions
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., view_patients, edit_appointments
+  label       String   // Human-readable label
+  category    String   // Patients, Appointments, Consultations, etc.
+  description String?
+  
+  roles       RolePermission[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([category])
+}
+
+// Junction table for Role-Permission many-to-many relationship
+model RolePermission {
+  id           String     @id @default(cuid())
+  
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime   @default(now())
+  
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+// Appointment model
+model Appointment {
+  id          String            @id @default(cuid())
+  
+  // Date and time
+  startTime   DateTime
+  endTime     DateTime
+  
+  // Status
+  status      AppointmentStatus @default(SCHEDULED)
+  notes       String?
+  
+  // Relationships
+  patientId   String
+  patient     Patient           @relation(fields: [patientId], references: [id])
+  
+  doctorId    String
+  doctor      User              @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  
+  serviceId   String?
+  service     Service?          @relation(fields: [serviceId], references: [id])
+  
+  clinicId    String
+  clinic      Clinic            @relation(fields: [clinicId], references: [id])
+  
+  // Consultation (optional - created after appointment)
+  consultation Consultation?
+  
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([clinicId])
+  @@index([startTime])
+}
+
+// Consultation model - medical records
+model Consultation {
+  id              String    @id @default(cuid())
+  
+  // Consultation details
+  chiefComplaint  String?
+  symptoms        String?
+  diagnosis       String?
+  treatment       String?
+  notes           String?
+  
+  // Vital signs (stored as JSON for flexibility)
+  vitalSigns      Json?
+  
+  // Relationships
+  appointmentId   String    @unique
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+  
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  
+  doctorId        String
+  doctor          User      @relation(fields: [doctorId], references: [id])
+  
+  // Prescriptions
+  prescriptions   Prescription[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([appointmentId])
+}
+
+// Prescription model
+model Prescription {
+  id              String    @id @default(cuid())
+  
+  // Prescription details
+  medications     Json      // Array of {name, dosage, frequency, duration, instructions}
+  diagnosis       String?
+  notes           String?
+  pdfUrl          String?   // URL to generated PDF
+  status          String    @default("active") // active, completed, cancelled
+  
+  // Relationships
+  consultationId  String?
+  consultation    Consultation? @relation(fields: [consultationId], references: [id])
+  
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  
+  doctorId        String
+  doctor          User      @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  
+  issuedAt        DateTime  @default(now())
+  expiresAt       DateTime?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([consultationId])
+  @@index([patientId])
+  @@index([doctorId])
+}
+
+// Invoice model
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String        @unique
+  
+  // Invoice details
+  status          InvoiceStatus @default(PENDING)
+  totalAmount     Float
+  paidAmount      Float         @default(0)
+  dueDate         DateTime?
+  notes           String?
+  
+  // Payment info
+  paymentMethod   String?
+  paymentDate     DateTime?
+  stripePaymentId String?
+  
+  // Relationships
+  patientId       String
+  patient         Patient       @relation(fields: [patientId], references: [id])
+  
+  clinicId        String
+  clinic          Clinic        @relation(fields: [clinicId], references: [id])
+  
+  items           InvoiceItem[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([patientId])
+  @@index([clinicId])
+  @@index([invoiceNumber])
+}
+
+// Invoice item model - line items
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([invoiceId])
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
