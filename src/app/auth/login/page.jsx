@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -29,7 +29,19 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
       } else {
-        router.push('/dashboard');
+        // After signIn with redirect: false the returned object may not include the user payload.
+        // Fetch the current session to reliably read the user's role (set by NextAuth callbacks).
+        const session = await getSession();
+        const userRole = session?.user?.role;
+
+  // Determine target path by role with a safe fallback
+  let dashboardPath = '/dashboard';
+  if (userRole === 'ADMIN') dashboardPath = '/admin/dashboard';
+  else if (userRole === 'PATIENT') dashboardPath = '/portal/dashboard';
+  else if (userRole === 'DOCTOR') dashboardPath = '/dashboard';
+  else if (userRole === 'RECEPTIONIST') dashboardPath = '/dashboard';
+
+        router.push(dashboardPath);
         router.refresh();
       }
     } catch (err) {

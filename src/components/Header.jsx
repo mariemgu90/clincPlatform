@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function Header({ user, clinicName, onSignOut }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Use passed user prop or fallback to session user
+  const currentUser = user || session?.user;
 
   const handleSignOut = () => {
     if (onSignOut) {
@@ -17,9 +21,13 @@ export default function Header({ user, clinicName, onSignOut }) {
       signOut({ callbackUrl: '/auth/login' });
     }
   };
+    console.log('aaaaasession ', session);
+
 
   const handleLogoClick = () => {
-    router.push('/dashboard');
+    const userRole = currentUser?.role;
+    const dashboardPath = userRole === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
+    router.push(dashboardPath);
   };
 
   const handleSearch = (e) => {
@@ -73,9 +81,9 @@ export default function Header({ user, clinicName, onSignOut }) {
             </div>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {clinicName || 'MedFlow'}
+                {'MedFlow'}
               </h1>
-              <p className="text-xs text-gray-500">Healthcare Management</p>
+              <p className="text-xs text-gray-500">Healthcare Management {clinicName}</p>
             </div>
           </div>
 
@@ -173,11 +181,11 @@ export default function Header({ user, clinicName, onSignOut }) {
                 className="flex items-center space-x-3 p-2 hover:bg-white/50 rounded-xl transition-all"
               >
                 <div className="w-8 h-8 gradient-accent rounded-lg flex items-center justify-center text-white font-semibold">
-                  {user?.name?.charAt(0) || 'U'}
+                  {currentUser?.name?.charAt(0) || 'U'}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-semibold text-gray-800">{user?.name || 'User'}</p>
-                  <p className="text-xs text-gray-500">{user?.role || 'Member'}</p>
+                  <p className="text-sm font-semibold text-gray-800">{currentUser?.name || 'User'}</p>
+                  <p className="text-xs text-gray-500">{currentUser?.role || 'Member'}</p>
                 </div>
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

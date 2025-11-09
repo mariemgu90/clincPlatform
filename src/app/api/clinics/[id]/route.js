@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const clinic = await prisma.clinic.findUnique({
       where: { id },
@@ -72,7 +72,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, address, city, state, zipCode, country, phone, email, website, logo, description, openingHours } = body;
 
@@ -126,7 +126,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if clinic exists
     const existingClinic = await prisma.clinic.findUnique({

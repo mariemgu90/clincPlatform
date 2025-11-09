@@ -9,6 +9,15 @@ export async function fetchClinics() {
   return await res.json();
 }
 
+export async function fetchClinicById(id) {
+  const res = await fetch(`/api/clinics/${id}`);
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch clinic');
+  }
+  return await res.json();
+}
+
 export async function fetchPatients({ clinicId, page, limit, search } = {}) {
   const params = new URLSearchParams();
   if (clinicId) params.set('clinicId', clinicId);
@@ -35,6 +44,15 @@ export async function fetchStaff({ clinicId } = {}) {
   const data = await res.json();
   // normalize to return staff array or object containing staff
   return data?.staff || data;
+}
+
+export async function fetchAllStaff() {
+  const res = await fetch('/api/staff');
+  if (!res.ok) {
+    throw new Error('Failed to fetch all staff');
+  }
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.staff || data || [];
 }
 
 export async function fetchStaffByClinic(clinicId) {
@@ -74,6 +92,15 @@ export async function fetchPatientsByClinic(clinicId) {
   }
   const data = await res.json();
   return Array.isArray(data) ? data : data.patients || data || [];
+}
+
+export async function fetchIntegrationsByClinic(clinicId) {
+  const res = await fetch(`/api/integrations?clinicId=${clinicId}`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch integrations by clinic');
+  }
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.integrations || data || [];
 }
 
 export async function fetchCountsForClinics(clinicList = []) {

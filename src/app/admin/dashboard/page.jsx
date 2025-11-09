@@ -64,10 +64,11 @@ export default function AdminDashboard() {
   if (session?.user?.role !== 'ADMIN') {
     return null;
   }
+  
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <Header />
+    <div className="min-h-screen bg-slate-100">
+      <Header user={session?.user} clinicName="MedFlow Admin" />
       <div className="flex">
         <Sidebar />
         <main className="flex-1 p-8 ml-64">
