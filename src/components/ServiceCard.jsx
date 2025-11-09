@@ -7,7 +7,7 @@ export default function ServiceCard({ service, onViewDetails, index }) {
       onClick={() => onViewDetails(service)}
     >
       <div className="flex items-start gap-4">
-        <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform">
+        <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform">
           🏥
         </div>
         <div className="flex-1">
@@ -36,7 +36,7 @@ export default function ServiceCard({ service, onViewDetails, index }) {
           </div>
         </div>
         <button
-          className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-semibold hover:from-purple-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg text-sm"
+          className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-600 transition-all shadow-md hover:shadow-lg text-sm"
           onClick={(e) => {
             e.stopPropagation();
             onViewDetails(service);

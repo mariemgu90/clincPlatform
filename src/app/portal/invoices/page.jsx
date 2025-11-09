@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import { fetchPortalInvoices } from '@/lib/api';
 
 export default function PatientInvoicesPage() {
   const { data: session, status } = useSession();
@@ -22,18 +23,15 @@ export default function PatientInvoicesPage() {
       if (session?.user?.role !== 'PATIENT') {
         router.push('/dashboard');
       } else {
-        fetchInvoices();
+        loadInvoices();
       }
     }
   }, [status, session, router]);
 
-  const fetchInvoices = async () => {
+  const loadInvoices = async () => {
     try {
-      const response = await fetch(`/api/invoices?patientId=${session?.user?.patientId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setInvoices(data.invoices || []);
-      }
+      const data = await fetchPortalInvoices(session?.user?.patientId);
+      setInvoices(data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching invoices:', error);

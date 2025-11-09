@@ -24,7 +24,8 @@ import {
   fetchClinicById,
   fetchIntegrationsByClinic,
   fetchAllStaff,
-} from '@/lib/clinicApi';
+  fetchStaff,
+} from '@/lib/api';
 
 export default function ClinicDetailPage() {
   const { data: session, status } = useSession();
@@ -47,7 +48,6 @@ export default function ClinicDetailPage() {
   const [showPatientDetailsModal, setShowPatientDetailsModal] = useState(false);
   const [showServiceDetailsModal, setShowServiceDetailsModal] = useState(false);
   const [showEditOperatingHoursModal, setShowEditOperatingHoursModal] = useState(false);
-  const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
 
   const [selectedStaffForDetails, setSelectedStaffForDetails] = useState(null);
   const [selectedPatientForDetails, setSelectedPatientForDetails] = useState(null);
@@ -88,11 +88,53 @@ export default function ClinicDetailPage() {
 
   const [selectedStaffIds, setSelectedStaffIds] = useState([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
-  const [selectedIntegrationIds, setSelectedIntegrationIds] = useState([]);
   const [tempOperatingHours, setTempOperatingHours] = useState({});
   const [overviewFormData, setOverviewFormData] = useState({ email: '', phone: '', website: '', address: '', city: '', state: '', zipCode: '', country: '' });
 
   const [error, setError] = useState(null);
+
+  const getStaffByClinic = async (clinicId) => {
+    // if (!clinicId) return setStaffMembers(allStaff || []);
+    try {
+      const staffArray = await fetchStaff({ clinicId });
+     
+      setStaffMembers(staffArray || []);
+      return;
+    } catch (e) {
+      // fallback to client-side filtering
+    }
+
+    // setStaffMembers((allStaff || []).filter(s => s.clinic === clinicId || s.clinicId === clinicId));
+  };
+
+  const getServicesByClinic = async (clinicId) => {
+    // if (!clinicId) return setClinicService(allServices || []);
+    try {
+      const servicesArray = await fetchServicesByClinic(clinicId);
+      setClinicService(servicesArray || []);
+      return;
+    } catch (e) {
+      // fallback to client-side filtering
+    }
+  };
+
+  const getPatientsByClinic = async (clinicId) => {
+    // if (!clinicId) return setClinicService(allServices || []);
+    try {
+      const servicesArray = await fetchServicesByClinic(clinicId);
+      setClinicService(servicesArray || []);
+      return;
+    } catch (e) {
+      // fallback to client-side filtering
+    }
+  };
+
+  // Fetch  data byclinicId from the database
+  useEffect(() => {
+    if (activeTab === 'staff') (getStaffByClinic())
+    if (activeTab === 'services') (getServicesByClinic())
+    if (activeTab === 'patients') (getPatientsByClinic())
+  }, [activeTab]);
 
   // Fetch clinic data from the database
   useEffect(() => {
@@ -105,18 +147,18 @@ export default function ClinicDetailPage() {
     const fetchClinicData = async () => {
       // Don't fetch if not authenticated or no clinic ID
       if (!clinicId || status !== 'authenticated') return;
-      
+
       try {
         setLoading(true);
-        
+
         // Fetch clinic details using the API helper
         const clinicData = await fetchClinicById(clinicId);
-        
+
         setClinic(clinicData);
-        
+
         // Extract settings from JSON if available
         const settings = clinicData.settings || {};
-        
+
         setFormData({
           name: clinicData.name,
           address: clinicData.address || '',
@@ -144,7 +186,7 @@ export default function ClinicDetailPage() {
 
         // Fetch related data
         await Promise.all([
-          fetchStaffByClinic(clinicId).then(data => setStaffMembers(data || [])),
+          // fetchStaffByClinic(clinicId).then(data => setStaffMembers(data || [])),
           fetchServicesByClinic(clinicId).then(data => setServices(data || [])),
           fetchPatientsByClinic(clinicId).then(data => setPatients(data || [])),
           fetchIntegrationsByClinic(clinicId).then(data => setIntegrations(data || [])),
@@ -299,7 +341,7 @@ export default function ClinicDetailPage() {
           })
         )
       );
-      
+
       const updatedStaff = await fetchStaffByClinic(clinicId);
       setStaffMembers(updatedStaff || []);
       setShowStaffModal(false);
@@ -315,13 +357,13 @@ export default function ClinicDetailPage() {
     try {
       // Get current staff IDs
       const currentStaffIds = staffMembers.map(s => s.id);
-      
+
       // Staff to unlink (in current but not in selected)
       const toUnlink = currentStaffIds.filter(id => !selectedStaffIds.includes(id));
-      
+
       // Staff to link (in selected but not in current)
       const toLink = selectedStaffIds.filter(id => !currentStaffIds.includes(id));
-      
+
       await Promise.all([
         ...toUnlink.map(staffId =>
           fetch(`/api/staff/${staffId}`, {
@@ -338,7 +380,7 @@ export default function ClinicDetailPage() {
           })
         ),
       ]);
-      
+
       const updatedStaff = await fetchStaffByClinic(clinicId);
       setStaffMembers(updatedStaff || []);
       setShowEditStaffListModal(false);
@@ -361,7 +403,7 @@ export default function ClinicDetailPage() {
           })
         )
       );
-      
+
       const updatedServices = await fetchServicesByClinic(clinicId);
       setServices(updatedServices || []);
       setShowServiceModal(false);
@@ -378,7 +420,7 @@ export default function ClinicDetailPage() {
       const currentServiceIds = services.map(s => s.id);
       const toUnlink = currentServiceIds.filter(id => !selectedServiceIds.includes(id));
       const toLink = selectedServiceIds.filter(id => !currentServiceIds.includes(id));
-      
+
       await Promise.all([
         ...toUnlink.map(serviceId =>
           fetch(`/api/services/${serviceId}`, {
@@ -395,7 +437,7 @@ export default function ClinicDetailPage() {
           })
         ),
       ]);
-      
+
       const updatedServices = await fetchServicesByClinic(clinicId);
       setServices(updatedServices || []);
       setShowEditServiceListModal(false);
@@ -573,8 +615,8 @@ export default function ClinicDetailPage() {
                   <ClinicIntegrations
                     integrations={integrations}
                     clinicId={clinicId}
-                    onEditIntegrationList={() => {}}
-                    onAddIntegrations={() => {}}
+                    onEditIntegrationList={() => { }}
+                    onAddIntegrations={() => { }}
                   />
                 )}
 
@@ -683,14 +725,14 @@ export default function ClinicDetailPage() {
                   <form onSubmit={handleSaveStaffList} className="space-y-4">
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                       {allStaff
-                        .filter(s => s.clinicId === null || s.clinicId === undefined || s.clinicId === clinicId)
+                        //   .filter(s => s.clinicId === null || s.clinicId === undefined || s.clinicId === clinicId)
                         .map((staff) => (
                           <label
                             key={staff.id}
                             className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedStaffIds.includes(staff.id)
                               ? 'bg-blue-50 border-blue-500'
                               : 'bg-slate-50 border-slate-200 hover:border-blue-300'
-                            }`}
+                              }`}
                           >
                             <input
                               type="checkbox"
@@ -752,7 +794,7 @@ export default function ClinicDetailPage() {
                             className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedServiceIds.includes(service.id)
                               ? 'bg-purple-50 border-purple-500'
                               : 'bg-slate-50 border-slate-200 hover:border-purple-300'
-                            }`}
+                              }`}
                           >
                             <input
                               type="checkbox"
@@ -816,7 +858,7 @@ export default function ClinicDetailPage() {
                             className={`flex items-center gap-5 p-5 rounded-2xl border-3 cursor-pointer transition-all ${selectedStaffIds.includes(staff.id)
                               ? 'bg-emerald-50 border-emerald-500 shadow-lg scale-105'
                               : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md'
-                            }`}
+                              }`}
                           >
                             <input
                               type="checkbox"
@@ -875,7 +917,7 @@ export default function ClinicDetailPage() {
                             className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedServiceIds.includes(service.id)
                               ? 'bg-emerald-50 border-emerald-500'
                               : 'bg-slate-50 border-slate-200 hover:border-emerald-300'
-                            }`}
+                              }`}
                           >
                             <input
                               type="checkbox"

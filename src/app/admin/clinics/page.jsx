@@ -27,7 +27,7 @@ import {
   createClinic,
   updateClinic,
   deleteClinic,
-} from '@/lib/clinicApi';
+} from '@/lib/api';
 import StaffDetails from '@/components/StaffDetails';
 import ServiceDetails from '@/components/ServiceDetails';
 

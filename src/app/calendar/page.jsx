@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import AppointmentForm from '../../components/AppointmentForm';
+import { fetchAppointments } from '@/lib/api';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -29,14 +30,13 @@ export default function CalendarPage() {
   }, [status, router]);
 
   useEffect(() => {
-    fetchAppointments();
+    loadAppointments();
   }, [currentDate]);
 
-  const fetchAppointments = async () => {
+  const loadAppointments = async () => {
     try {
-      const res = await fetch('/api/appointments');
-      const data = await res.json();
-      setAppointments(data.appointments || []);
+      const data = await fetchAppointments();
+      setAppointments(data);
     } catch (error) {
       console.error('Failed to fetch appointments:', error);
     } finally {

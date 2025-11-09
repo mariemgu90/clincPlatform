@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
+import { fetchInvoices } from '@/lib/api';
 
 export default function BillingPage() {
   const { data: session, status } = useSession();
@@ -29,14 +30,12 @@ export default function BillingPage() {
   }, [status, router]);
 
   useEffect(() => {
-    fetchInvoices();
+    loadInvoices();
   }, []);
 
-  const fetchInvoices = async () => {
+  const loadInvoices = async () => {
     try {
-      const res = await fetch('/api/invoices');
-      const data = await res.json();
-      const invoiceList = data.invoices || [];
+      const invoiceList = await fetchInvoices();
       setInvoices(invoiceList);
       
       // Calculate stats

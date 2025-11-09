@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import { fetchUsers } from '@/lib/api';
 
 export default function UsersManagement() {
   const { data: session, status } = useSession();
@@ -22,25 +23,22 @@ export default function UsersManagement() {
     }
   }, [status, session, router]);
 
-  useEffect(() => {
-    if (session?.user?.role === 'ADMIN') {
-      fetchUsers();
-    }
-  }, [session]);
-
-  const fetchUsers = async () => {
+  const loadUsers = async () => {
     try {
-      const response = await fetch('/api/users');
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users || []);
-      }
+      const data = await fetchUsers();
+      setUsers(data);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (session?.user?.role === 'ADMIN') {
+      loadUsers();
+    }
+  }, [session]);
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

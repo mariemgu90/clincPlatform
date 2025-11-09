@@ -150,3 +150,109 @@ export async function POST(request) {
     );
   }
 }
+
+// PATCH /api/appointments - Update appointment status
+export async function PATCH(request) {
+  try {
+    const user = await getCurrentUser();
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, status, notes } = body;
+
+    if (!id || !status) {
+      return NextResponse.json(
+        { error: 'Appointment ID and status are required' },
+        { status: 400 }
+      );
+    }
+
+    // Get the appointment to verify ownership/permissions
+    const appointment = await prisma.appointment.findUnique({
+      where: { id },
+      include: {
+        patient: true,
+      },
+    });
+
+    if (!appointment) {
+      return NextResponse.json(
+        { error: 'Appointment not found' },
+        { status: 404 }
+      );
+    }
+
+    // Verify permissions
+    // Patients can only cancel their own appointments
+    // Doctors and staff can update any appointment in their clinic
+    if (user.role === 'PATIENT') {
+      if (appointment.patient.userId !== user.id) {
+        return NextResponse.json(
+          { error: 'You can only modify your own appointments' },
+          { status: 403 }
+        );
+      }
+      
+      // Patients can only cancel appointments
+      if (status !== 'CANCELLED') {
+        return NextResponse.json(
+          { error: 'Patients can only cancel appointments' },
+          { status: 403 }
+        );
+      }
+
+      // Check if appointment is too soon to cancel (e.g., within 24 hours)
+      const hoursTillAppointment = (new Date(appointment.startTime) - new Date()) / (1000 * 60 * 60);
+      if (hoursTillAppointment < 24) {
+        return NextResponse.json(
+          { error: 'Cannot cancel appointment less than 24 hours before scheduled time. Please contact the clinic.' },
+          { status: 400 }
+        );
+      }
+    } else if (!['ADMIN', 'DOCTOR', 'RECEPTIONIST'].includes(user.role)) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
+    // Update the appointment
+    const updatedAppointment = await prisma.appointment.update({
+      where: { id },
+      data: {
+        status,
+        ...(notes && { notes }),
+      },
+      include: {
+        patient: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            email: true,
+          },
+        },
+        doctor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        service: true,
+      },
+    });
+
+    return NextResponse.json(updatedAppointment);
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    return NextResponse.json(
+      { error: 'Failed to update appointment' },
+      { status: 500 }
+    );
+  }
+}

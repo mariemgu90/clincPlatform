@@ -6,6 +6,19 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
+  // Clean up existing data to avoid conflicts - delete in correct order based on foreign keys
+  await prisma.prescription.deleteMany({});
+  await prisma.invoiceItem.deleteMany({});
+  await prisma.invoice.deleteMany({});
+  await prisma.consultation.deleteMany({});
+  await prisma.appointment.deleteMany({});
+  await prisma.patient.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.service.deleteMany({});
+  await prisma.clinic.deleteMany({});
+
+  console.log('🧹 Cleaned up existing data');
+
   // Create multiple clinics
   const clinic1 = await prisma.clinic.create({
     data: {
@@ -479,6 +492,34 @@ async function main() {
   });
 
   console.log('✅ Created 2 invoices');
+
+  // Add notifications
+  const notifications = [
+    {
+      type: 'appointment',
+      title: 'Upcoming Appointment Reminder',
+      message: 'You have an appointment scheduled for tomorrow at 10:00 AM.',
+      userId: patient1User.id,
+      clinicId: clinic.id,
+    },
+    {
+      type: 'system',
+      title: 'System Maintenance',
+      message: 'The system will undergo maintenance on Saturday from 1:00 AM to 3:00 AM.',
+      userId: admin.id,
+      clinicId: clinic.id,
+    },
+    {
+      type: 'payment',
+      title: 'Invoice Due Reminder',
+      message: 'Your invoice INV-2025-002 is due on ' + invoice2.dueDate.toDateString() + '.',
+      userId: patient2User.id,
+      clinicId: clinic.id,
+    },
+  ];
+
+  await prisma.notification.createMany({ data: notifications });
+  console.log('✅ Created notifications');
 
   console.log('\n🎉 Seeding completed successfully!');
   console.log('\n📋 Login credentials:');

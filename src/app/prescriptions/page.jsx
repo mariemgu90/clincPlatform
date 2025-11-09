@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { fetchPrescriptions, downloadPrescriptionPDF } from '@/lib/api';
 
 export default function PrescriptionsPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [prescriptions, setPrescrip tions] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
   const [filteredPrescriptions, setFilteredPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,18 +18,17 @@ export default function PrescriptionsPage() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    fetchPrescriptions();
+    loadPrescriptions();
   }, []);
 
   useEffect(() => {
     filterPrescriptions();
   }, [prescriptions, searchTerm, statusFilter]);
 
-  const fetchPrescriptions = async () => {
+  const loadPrescriptions = async () => {
     try {
-      const response = await fetch('/api/prescriptions');
-      const data = await response.json();
-      setPrescrip tions(data.prescriptions || []);
+      const data = await fetchPrescriptions();
+      setPrescriptions(data);
     } catch (error) {
       console.error('Error fetching prescriptions:', error);
     } finally {
@@ -56,19 +56,10 @@ export default function PrescriptionsPage() {
 
   const handleDownloadPDF = async (prescriptionId) => {
     try {
-      const response = await fetch(`/api/prescriptions/${prescriptionId}/pdf`);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `prescription-${prescriptionId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      await downloadPrescriptionPDF(prescriptionId);
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      alert('Failed to download prescription PDF');
+      alert(error.message || 'Failed to download prescription PDF');
     }
   };
 

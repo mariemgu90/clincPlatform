@@ -37,10 +37,10 @@ export default function StaffMemberCard({ staff, onViewDetails }) {
 
         <div className="flex items-center gap-3">
           <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-md ${
-            staff.role === 'DOCTOR' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' :
-            staff.role === 'RECEPTIONIST' ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white' :
-            staff.role === 'NURSE' ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white' :
-            'bg-gradient-to-r from-slate-500 to-slate-600 text-white'
+            staff.role === 'DOCTOR' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white' :
+            staff.role === 'ADMIN' ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white' :
+            staff.role === 'NURSE' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' :
+            'bg-gray-200 text-gray-700'
           }`}>
             {staff.role}
           </span>

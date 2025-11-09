@@ -1,6 +1,7 @@
 
 "use client";
 import React from "react";
+import { useRouter } from 'next/navigation';
 
 export default function StatCard({
   icon = "👥",
@@ -8,9 +9,14 @@ export default function StatCard({
   value = "0",
   valueColor = "text-emerald-600",
   className = "",
+  link = "",
 }) {
+    const router = useRouter();
+  
   return (
     <div
+onClick={() => link && router.push(link)}
+
       className={`bg-white rounded-2xl shadow-md border border-slate-200 p-4 flex items-center justify-between ${className}`}
     >
       <div className="flex items-center gap-3">

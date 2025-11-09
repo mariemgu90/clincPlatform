@@ -49,8 +49,9 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
+        token.id = user.id;
         token.role = user.role;
         token.clinicId = user.clinicId;
         token.patientId = user.patientId;
@@ -58,11 +59,15 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session?.user) {
-        session.user.id = token.sub;
-        session.user.role = token.role;
-        session.user.clinicId = token.clinicId;
-        session.user.patientId = token.patientId;
+      try {
+        if (session && session.user && token) {
+          session.user.id = token.id || token.sub || '';
+          session.user.role = token.role || 'PATIENT';
+          session.user.clinicId = token.clinicId || null;
+          session.user.patientId = token.patientId || null;
+        }
+      } catch (error) {
+        console.error('Session callback error:', error);
       }
       return session;
     },
@@ -76,6 +81,7 @@ export const authOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);

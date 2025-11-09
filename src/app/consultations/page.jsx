@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import { fetchConsultations } from '@/lib/api';
 
 export default function ConsultationsPage() {
   const { data: session, status } = useSession();
@@ -22,14 +23,13 @@ export default function ConsultationsPage() {
   }, [status, router]);
 
   useEffect(() => {
-    fetchConsultations();
+    loadConsultations();
   }, []);
 
-  const fetchConsultations = async () => {
+  const loadConsultations = async () => {
     try {
-      const res = await fetch('/api/consultations');
-      const data = await res.json();
-      setConsultations(data.consultations || []);
+      const data = await fetchConsultations();
+      setConsultations(data);
     } catch (error) {
       console.error('Failed to fetch consultations:', error);
     } finally {

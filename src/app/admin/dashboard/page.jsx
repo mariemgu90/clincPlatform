@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { fetchAdminStats as getAdminStats } from '@/lib/api';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import StatCard from '@/components/StatCard';
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -40,12 +42,9 @@ export default function AdminDashboard() {
 
   const fetchAdminStats = async () => {
     try {
-      const response = await fetch('/api/admin/stats');
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.stats);
-        setRecentActivity(data.recentActivity || []);
-      }
+      const data = await getAdminStats();
+      setStats(data.stats);
+      setRecentActivity(data.recentActivity || []);
     } catch (error) {
       console.error('Failed to fetch admin stats:', error);
     } finally {
@@ -65,6 +64,77 @@ export default function AdminDashboard() {
     return null;
   }
   
+  const cardDashboardStats = [
+                    {
+                      title: "Total Users",
+                      value: stats.totalUsers,
+                      icon: "👥",
+                      color: "from-emerald-500 to-teal-500",
+                      link: "/admin/users"
+                    },
+                    {
+                      title: "Total Clinics",
+                      value: stats.totalClinics,
+                      icon: "🏥",
+                      color: "from-teal-500 to-emerald-500",
+                      link: "/admin/clinics"
+                    },
+                    {
+                      title: "Total Patients",
+                      value: stats.totalPatients,
+                      icon: "🩺",
+                      color: "from-emerald-500 to-emerald-600",
+                      link: "/patients"
+                    },
+                    {
+                      title: "Total Staff",
+                      value: stats.totalStaff,
+                      icon: "👨‍⚕️",
+                      color: "from-purple-500 to-indigo-500",
+                      link: "/admin/staff"
+                    },
+                    {
+                      title: "Total Revenue",
+                      value: `$${stats.totalRevenue.toLocaleString()}`,
+                      icon: "💰",
+                      color: "from-amber-500 to-orange-500",
+                      link: "/billing"
+                    },
+                    {
+                      title: "Active Appointments",
+                      value: stats.activeAppointments,
+                      icon: "📅",
+                      color: "from-blue-500 to-teal-500",
+                      link: "/calendar"
+                    },
+                    {
+                      title: "Active Services",
+                      value: stats.activeServices,
+                      icon: "🔧",
+                      color: "from-cyan-500 to-blue-500",
+                      link: "/admin/services"
+                    },
+                    {
+                      title: "Pending Invoices",
+                      value: stats.pendingInvoices,
+                      icon: "📄",
+                      color: "from-rose-500 to-pink-500",
+                      link: "/billing"
+                    },
+                    {
+                      title: "Notifications",
+                      value: stats.pendingNotifications,
+                      icon: "🔔",
+                      color: "from-orange-500 to-amber-500",
+                      link: "/notifications"
+                    },
+                    {
+                      title: "System Health",
+                      value: stats.systemHealth,
+                      icon: "⚡",
+                      color: "from-teal-500 to-teal-600"
+                    }
+                    ]
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -84,79 +154,20 @@ export default function AdminDashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatCard
-                title="Total Users"
-                value={stats.totalUsers}
-                icon="👥"
-                color="from-emerald-500 to-teal-500"
-                link="/admin/users"
-              />
-              <StatCard
-                title="Total Clinics"
-                value={stats.totalClinics}
-                icon="🏥"
-                color="from-teal-500 to-emerald-500"
-                link="/admin/clinics"
-              />
-              <StatCard
-                title="Total Patients"
-                value={stats.totalPatients}
-                icon="🩺"
-                color="from-emerald-500 to-emerald-600"
-                link="/patients"
-              />
-              <StatCard
-                title="Total Staff"
-                value={stats.totalStaff}
-                icon="👨‍⚕️"
-                color="from-purple-500 to-indigo-500"
-                link="/admin/staff"
-              />
-              <StatCard
-                title="Total Revenue"
-                value={`$${stats.totalRevenue.toLocaleString()}`}
-                icon="💰"
-                color="from-amber-500 to-orange-500"
-                link="/billing"
-              />
-              <StatCard
-                title="Active Appointments"
-                value={stats.activeAppointments}
-                icon="📅"
-                color="from-blue-500 to-teal-500"
-                link="/calendar"
-              />
-              <StatCard
-                title="Active Services"
-                value={stats.activeServices}
-                icon="🔧"
-                color="from-cyan-500 to-blue-500"
-                link="/admin/services"
-              />
-              <StatCard
-                title="Pending Invoices"
-                value={stats.pendingInvoices}
-                icon="📄"
-                color="from-rose-500 to-pink-500"
-                link="/billing"
-              />
-              <StatCard
-                title="Notifications"
-                value={stats.pendingNotifications}
-                icon="🔔"
-                color="from-orange-500 to-amber-500"
-                link="/notifications"
-              />
-              <StatCard
-                title="System Health"
-                value={stats.systemHealth}
-                icon="⚡"
-                color="from-teal-500 to-teal-600"
-              />
-            </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {cardDashboardStats.map((stat, index) => (
+                    <StatCard
+                      key={index}
+                      title={stat.title}
+                      value={stat.value}
+                      icon={stat.icon}
+                      color={stat.color}
+                      link={stat.link}
+                    />
+                    ))}
+                  </div>
 
-            {/* Quick Actions */}
+                  {/* Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               {/* Management Actions */}
               <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
@@ -421,24 +432,24 @@ export default function AdminDashboard() {
   );
 }
 
-function StatCard({ title, value, icon, color, link }) {
-  const router = useRouter();
+// function StatCard({ title, value, icon, color, link }) {
+//   const router = useRouter();
   
-  return (
-    <div 
-      onClick={() => link && router.push(link)}
-      className={`bg-white rounded-2xl shadow-lg p-6 border border-slate-200 ${link ? 'cursor-pointer hover:scale-105' : ''} transition-all duration-300`}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className={`text-4xl p-3 rounded-xl bg-gradient-to-r ${color} shadow-md shadow-emerald-500/30`}>
-          {icon}
-        </div>
-      </div>
-      <h3 className="text-slate-600 text-sm mb-2 font-semibold">{title}</h3>
-      <p className="text-3xl font-bold text-slate-900">{value}</p>
-    </div>
-  );
-}
+//   return (
+//     <div 
+//       onClick={() => link && router.push(link)}
+//       className={`bg-white rounded-2xl shadow-lg p-6 border border-slate-200 ${link ? 'cursor-pointer hover:scale-105' : ''} transition-all duration-300`}
+//     >
+//       <div className="flex items-center justify-between mb-4">
+//         <div className={`text-4xl p-3 rounded-xl bg-gradient-to-r ${color} shadow-md shadow-emerald-500/30`}>
+//           {icon}
+//         </div>
+//       </div>
+//       <h3 className="text-slate-600 text-sm mb-2 font-semibold">{title}</h3>
+//       <p className="text-3xl font-bold text-slate-900">{value}</p>
+//     </div>
+//   );
+// }
 
 function ActionButton({ onClick, icon, label, description }) {
   return (

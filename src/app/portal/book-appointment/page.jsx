@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import { fetchServices, fetchUsers, createAppointment } from '@/lib/api';
 
 export default function BookAppointmentPage() {
   const { data: session, status } = useSession();
@@ -41,22 +42,17 @@ export default function BookAppointmentPage() {
   const fetchData = async () => {
     try {
       // Fetch services
-      const servicesRes = await fetch('/api/services?activeOnly=true');
-      if (servicesRes.ok) {
-        const servicesData = await servicesRes.json();
-        setServices(servicesData.services || []);
-      }
+      const servicesData = await fetchServices({ activeOnly: true });
+      setServices(servicesData);
 
       // Fetch doctors
-      const doctorsRes = await fetch('/api/users?role=DOCTOR');
-      if (doctorsRes.ok) {
-        const doctorsData = await doctorsRes.json();
-        setDoctors(doctorsData.users || []);
-      }
+      const doctorsData = await fetchUsers({ role: 'DOCTOR' });
+      setDoctors(doctorsData);
 
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // Log only the message to avoid printing Error objects to the console (prevents Next.js overlay)
+      console.error('Error fetching data:', error?.message || String(error));
       setLoading(false);
     }
   };
@@ -70,53 +66,78 @@ export default function BookAppointmentPage() {
     return slots;
   };
 
+  const fetchDoctorSchedule = async (doctorId, date) => {
+    try {
+        const response = await fetch(`/api/doctor-schedule?doctorId=${doctorId}&date=${date}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch doctor schedule');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching doctor schedule:', error.message);
+        return [];
+    }
+};
+
   useEffect(() => {
     if (selectedDate && selectedDoctor) {
-      // Generate available time slots
-      const slots = generateTimeSlots();
-      setAvailableSlots(slots);
+      const fetchSchedule = async () => {
+        const schedule = await fetchDoctorSchedule(selectedDoctor, selectedDate);
+        const allSlots = generateTimeSlots();
+        const availableSlots = allSlots.filter(slot => !schedule.includes(slot));
+        setAvailableSlots(availableSlots);
+      };
+      fetchSchedule();
     }
   }, [selectedDate, selectedDoctor]);
 
+  // Ensure the form submission is strictly controlled
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Only allow submission on step 5 (Confirm)
+    if (currentStep !== 5) {
+        console.warn('Form submission blocked: Not on step 5');
+        return;
+    }
+
     setSubmitting(true);
 
     try {
+      // Calculate endTime based on service duration (default 30 minutes)
+      const selectedServiceData = services.find((s) => s.id === selectedService);
+      const durationMinutes = selectedServiceData?.duration || 30;
+      const startDateTime = new Date(`${selectedDate}T${selectedTime}`);
+      const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
+
       const appointmentData = {
         patientId: session?.user?.patientId,
         doctorId: selectedDoctor,
         serviceId: selectedService || null,
-        startTime: new Date(`${selectedDate}T${selectedTime}`).toISOString(),
-        reason: reason || 'General consultation',
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        notes: reason || 'General consultation',
         status: 'SCHEDULED',
         clinicId: session?.user?.clinicId,
       };
 
-      const response = await fetch('/api/appointments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(appointmentData),
+      await createAppointment(appointmentData);
+      
+      setAlert({
+        show: true,
+        type: 'success',
+        message: 'Appointment booked successfully! Redirecting...',
       });
-
-      if (response.ok) {
-        setAlert({
-          show: true,
-          type: 'success',
-          message: 'Appointment booked successfully! Redirecting...',
-        });
-        setTimeout(() => {
-          router.push('/portal/appointments');
-        }, 2000);
-      } else {
-        throw new Error('Failed to book appointment');
-      }
+      setTimeout(() => {
+        router.push('/portal/appointments');
+      }, 2000);
     } catch (error) {
-      console.error('Error booking appointment:', error);
+      // Log only the message to avoid Next.js dev overlay showing full Error objects
+      console.error('Error booking appointment:', error?.message || String(error));
       setAlert({
         show: true,
         type: 'error',
-        message: 'Failed to book appointment. Please try again.',
+        message: error.message || 'Failed to book appointment. Please try again.',
       });
     } finally {
       setSubmitting(false);
@@ -139,7 +160,9 @@ export default function BookAppointmentPage() {
     if (currentStep === 4 && !selectedTime) {
       setAlert({ show: true, type: 'error', message: 'Please select a time slot' });
       return;
-    }
+    }  
+  
+
     setAlert({ show: false, type: '', message: '' });
     setCurrentStep(currentStep + 1);
   };
@@ -222,7 +245,8 @@ export default function BookAppointmentPage() {
 
             {/* Booking Form Card */}
             <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} >
+              
                 {/* Step 1: Select Service */}
                 {currentStep === 1 && (
                   <div>
@@ -350,6 +374,10 @@ export default function BookAppointmentPage() {
                         <textarea
                           value={reason}
                           onChange={(e) => setReason(e.target.value)}
+                          onKeyDown={(e) => {
+                            // Allow Enter in textarea for new lines, but prevent form submission
+                            e.stopPropagation();
+                          }}
                           placeholder="Describe your symptoms or reason for consultation..."
                           className="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-purple-600 focus:outline-none"
                           rows="3"
