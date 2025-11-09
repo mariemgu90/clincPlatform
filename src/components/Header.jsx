@@ -21,14 +21,29 @@ export default function Header({ user, clinicName, onSignOut }) {
       signOut({ callbackUrl: '/auth/login' });
     }
   };
-    console.log('aaaaasession ', session);
-
 
   const handleLogoClick = () => {
     const userRole = currentUser?.role;
-    const dashboardPath = userRole === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
+    let dashboardPath;
+    
+    switch (userRole) {
+      case 'ADMIN':
+        dashboardPath = '/admin/dashboard';
+        break;
+      case 'PATIENT':
+        dashboardPath = '/portal/dashboard';
+        break;
+      case 'DOCTOR':
+      case 'RECEPTIONIST':
+        dashboardPath = '/dashboard';
+        break;
+      default:
+        dashboardPath = '/dashboard';
+    }
+    
     router.push(dashboardPath);
   };
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -80,7 +95,7 @@ export default function Header({ user, clinicName, onSignOut }) {
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
                 {'MedFlow'}
               </h1>
               <p className="text-xs text-gray-500">Healthcare Management {clinicName}</p>
@@ -95,7 +110,7 @@ export default function Header({ user, clinicName, onSignOut }) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search patients, appointments..."
-                className="w-full px-4 py-2 pl-10 bg-white/50 border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
+                className="w-full px-4 py-2 pl-10 bg-white/50 border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
               />
               <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -124,7 +139,7 @@ export default function Header({ user, clinicName, onSignOut }) {
               {/* Notifications Dropdown */}
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 glass-card rounded-xl shadow-xl overflow-hidden animate-scale-in z-50">
-                  <div className="px-4 py-3 bg-gradient-to-r from-purple-500 to-blue-500">
+                  <div className="px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500">
                     <h3 className="text-white font-semibold">Notifications</h3>
                     <p className="text-white/80 text-xs">{unreadCount} unread notifications</p>
                   </div>
@@ -137,12 +152,12 @@ export default function Header({ user, clinicName, onSignOut }) {
                             setShowNotifications(false);
                             router.push('/notifications');
                           }}
-                          className={`px-4 py-3 border-b border-gray-100 hover:bg-purple-50 transition-colors cursor-pointer ${
-                            !notif.read ? 'bg-purple-50/50' : ''
+                          className={`px-4 py-3 border-b border-gray-100 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                            !notif.read ? 'bg-emerald-50/50' : ''
                           }`}
                         >
                           <div className="flex items-start space-x-3">
-                            <div className={`w-2 h-2 rounded-full mt-2 ${!notif.read ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
+                            <div className={`w-2 h-2 rounded-full mt-2 ${!notif.read ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
                             <div className="flex-1">
                               <p className="text-sm text-gray-800">{notif.message}</p>
                               <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
@@ -165,7 +180,7 @@ export default function Header({ user, clinicName, onSignOut }) {
                         setShowNotifications(false);
                         router.push('/notifications');
                       }}
-                      className="text-sm text-purple-600 hover:text-purple-700 font-medium w-full text-center"
+                      className="text-sm text-emerald-600 hover:text-emerald-700 font-medium w-full text-center"
                     >
                       View all notifications
                     </button>

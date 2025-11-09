@@ -60,6 +60,9 @@ model User {
   accounts      Account[]
   sessions      Session[]
   
+  // Notifications
+  notifications Notification[] // Reverse relation for notifications
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -83,6 +86,9 @@ model Clinic {
   appointments Appointment[]
   services    Service[]
   invoices    Invoice[]
+  
+  // Notifications
+  notifications Notification[] // Reverse relation for notifications
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -361,6 +367,29 @@ model InvoiceItem {
   createdAt   DateTime @default(now())
   
   @@index([invoiceId])
+}
+
+// Notification model
+model Notification {
+  id          String   @id @default(cuid())
+  type        String   // e.g., appointment, payment, reminder, system, message
+  title       String
+  message     String
+  icon        String?  // Optional icon for UI
+  read        Boolean  @default(false)
+  
+  // Relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  clinicId    String?
+  clinic      Clinic?  @relation(fields: [clinicId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([clinicId])
 }
 
 // NextAuth models

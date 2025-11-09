@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { fetchMedicalRecords } from '@/lib/api';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 
@@ -21,21 +22,18 @@ export default function MedicalRecordsPage() {
       if (session?.user?.role !== 'PATIENT') {
         router.push('/dashboard');
       } else {
-        fetchMedicalRecords();
+        fetchRecords();
       }
     }
   }, [status, session, router]);
 
-  const fetchMedicalRecords = async () => {
+  const fetchRecords = async () => {
     try {
-      const response = await fetch(`/api/consultations?patientId=${session?.user?.patientId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setConsultations(data.consultations || []);
-      }
-      setLoading(false);
+      const data = await fetchMedicalRecords();
+      setConsultations(data.consultations || []);
     } catch (error) {
       console.error('Error fetching medical records:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -56,14 +54,14 @@ export default function MedicalRecordsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
       <Header />
       <div className="flex">
         <Sidebar />
@@ -71,7 +69,7 @@ export default function MedicalRecordsPage() {
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">
                 Medical Records
               </h1>
               <p className="text-gray-600">View your consultation history and prescriptions</p>
@@ -87,7 +85,7 @@ export default function MedicalRecordsPage() {
                 </p>
                 <button
                   onClick={() => router.push('/portal/book-appointment')}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:shadow-lg transition-all"
+                  className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg transition-all"
                 >
                   Book Appointment
                 </button>
@@ -100,14 +98,14 @@ export default function MedicalRecordsPage() {
                     <div key={consultation.id} className="relative pb-8">
                       {/* Timeline Line */}
                       {index !== consultations.length - 1 && (
-                        <div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-purple-600 to-blue-600"></div>
+                        <div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-emerald-600 to-teal-600"></div>
                       )}
 
                       {/* Consultation Card */}
                       <div className="flex gap-6">
                         {/* Timeline Dot */}
                         <div className="relative flex-shrink-0">
-                          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                          <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
                             {index + 1}
                           </div>
                         </div>
@@ -118,7 +116,7 @@ export default function MedicalRecordsPage() {
                             <div className="flex-1">
                               {/* Header */}
                               <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold">
+                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center text-white text-lg font-bold">
                                   {consultation.doctor?.name?.charAt(0) || 'D'}
                                 </div>
                                 <div>
@@ -175,7 +173,7 @@ export default function MedicalRecordsPage() {
                             <div className="flex flex-col gap-3 md:items-end">
                               <button
                                 onClick={() => openDetailModal(consultation)}
-                                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all font-medium whitespace-nowrap"
+                                className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:shadow-lg transition-all font-medium whitespace-nowrap"
                               >
                                 View Full Record
                               </button>
@@ -208,7 +206,7 @@ export default function MedicalRecordsPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-8">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-2xl">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 rounded-t-2xl">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold mb-2">Consultation Details</h2>

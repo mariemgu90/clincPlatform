@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { fetchPatients, fetchConsultations, createPrescription } from '@/lib/api';
 
 export default function NewPrescriptionPage() {
   const { data: session } = useSession();
@@ -63,35 +64,33 @@ export default function NewPrescriptionPage() {
     'Ongoing',
   ];
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
-
-  useEffect(() => {
-    if (formData.patientId) {
-      fetchConsultations(formData.patientId);
-    }
-  }, [formData.patientId]);
-
-  const fetchPatients = async () => {
+  const loadPatients = async () => {
     try {
-      const response = await fetch('/api/patients');
-      const data = await response.json();
+      const data = await fetchPatients();
       setPatients(data);
     } catch (error) {
       console.error('Error fetching patients:', error);
     }
   };
 
-  const fetchConsultations = async (patientId) => {
+  const loadConsultations = async (patientId) => {
     try {
-      const response = await fetch(`/api/consultations?patientId=${patientId}`);
-      const data = await response.json();
-      setConsultations(data.consultations || []);
+      const data = await fetchConsultations({ patientId });
+      setConsultations(data);
     } catch (error) {
       console.error('Error fetching consultations:', error);
     }
   };
+
+  useEffect(() => {
+    loadPatients();
+  }, []);
+
+  useEffect(() => {
+    if (formData.patientId) {
+      loadConsultations(formData.patientId);
+    }
+  }, [formData.patientId]);
 
   const handleAddMedication = () => {
     setMedications([
@@ -134,27 +133,17 @@ export default function NewPrescriptionPage() {
         return;
       }
 
-      const response = await fetch('/api/prescriptions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          medications: validMedications,
-          doctorId: session?.user?.id,
-        }),
+      await createPrescription({
+        ...formData,
+        medications: validMedications,
+        doctorId: session?.user?.id,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        alert('Prescription created successfully!');
-        router.push(`/prescriptions`);
-      } else {
-        const error = await response.json();
-        alert(`Failed to create prescription: ${error.error}`);
-      }
+      alert('Prescription created successfully!');
+      router.push(`/prescriptions`);
     } catch (error) {
       console.error('Error creating prescription:', error);
-      alert('Failed to create prescription');
+      alert(error.message || 'Failed to create prescription');
     } finally {
       setLoading(false);
     }

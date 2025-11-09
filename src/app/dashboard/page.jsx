@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import StatsCard from '../../components/StatsCard';
+import { fetchDashboardStats, fetchPatients, fetchAppointments } from '@/lib/api';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -25,26 +26,15 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, patientsRes, appointmentsRes] = await Promise.all([
-        fetch('/api/dashboard/stats'),
-        fetch('/api/patients?limit=5'),
-        fetch('/api/appointments?limit=5'),
+      const [statsData, patientsData, appointmentsData] = await Promise.all([
+        fetchDashboardStats(),
+        fetchPatients({ limit: 5 }),
+        fetchAppointments({ limit: 5 }),
       ]);
 
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData);
-      }
-
-      if (patientsRes.ok) {
-        const patientsData = await patientsRes.json();
-        setRecentPatients(patientsData.patients || []);
-      }
-
-      if (appointmentsRes.ok) {
-        const appointmentsData = await appointmentsRes.json();
-        setUpcomingAppointments(appointmentsData.slice(0, 5) || []);
-      }
+      setStats(statsData);
+      setRecentPatients(patientsData);
+      setUpcomingAppointments(appointmentsData.slice(0, 5) || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {

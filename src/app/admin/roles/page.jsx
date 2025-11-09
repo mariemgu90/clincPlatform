@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import { fetchRoles, createRole, updateRole, deleteRole } from '@/lib/api';
 
 export default function RolesManagement() {
   const { data: session, status } = useSession();
@@ -53,15 +54,13 @@ export default function RolesManagement() {
     } else if (session?.user?.role !== 'ADMIN') {
       router.push('/dashboard');
     } else {
-      fetchRoles();
+      loadRoles();
     }
   }, [status, session, router]);
 
-  const fetchRoles = async () => {
+  const loadRoles = async () => {
     try {
-      const response = await fetch('/api/roles');
-      if (!response.ok) throw new Error('Failed to fetch roles');
-      const data = await response.json();
+      const data = await fetchRoles();
       setRoles(data);
       setLoading(false);
     } catch (error) {
@@ -73,21 +72,13 @@ export default function RolesManagement() {
   const handleAddRole = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/roles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error('Failed to add role');
-      
-      const newRole = await response.json();
+      const newRole = await createRole(formData);
       setRoles([...roles, newRole]);
       setShowAddModal(false);
       setFormData({ name: '', description: '', permissions: [] });
     } catch (error) {
       console.error('Failed to add role:', error);
-      alert('Failed to add role');
+      alert(error.message || 'Failed to add role');
     }
   };
 
@@ -104,15 +95,7 @@ export default function RolesManagement() {
   const handleUpdateRole = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/api/roles/${editingRole.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error('Failed to update role');
-
-      const updatedRole = await response.json();
+      const updatedRole = await updateRole(editingRole.id, formData);
       setRoles(roles.map(role =>
         role.id === editingRole.id ? updatedRole : role
       ));
@@ -121,23 +104,18 @@ export default function RolesManagement() {
       setFormData({ name: '', description: '', permissions: [] });
     } catch (error) {
       console.error('Failed to update role:', error);
-      alert('Failed to update role');
+      alert(error.message || 'Failed to update role');
     }
   };
 
   const handleDeleteRole = async (id) => {
     if (!confirm('Are you sure you want to delete this role? This action cannot be undone.')) return;
     try {
-      const response = await fetch(`/api/roles/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete role');
-
+      await deleteRole(id);
       setRoles(roles.filter(role => role.id !== id));
     } catch (error) {
       console.error('Failed to delete role:', error);
-      alert('Failed to delete role');
+      alert(error.message || 'Failed to delete role');
     }
   };
 

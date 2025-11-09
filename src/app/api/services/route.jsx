@@ -13,10 +13,18 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get('activeOnly') === 'true';
+    const clinicId = searchParams.get('clinicId');
 
-    const where = {
-      clinicId: session.user.clinicId,
-    };
+    // Build where clause
+    const where = {};
+    
+    // If clinicId is provided in query params, use it (for admin filtering)
+    // Otherwise, use the user's clinicId
+    if (clinicId) {
+      where.clinicId = clinicId;
+    } else if (session.user.clinicId) {
+      where.clinicId = session.user.clinicId;
+    }
 
     if (activeOnly) {
       where.active = true;

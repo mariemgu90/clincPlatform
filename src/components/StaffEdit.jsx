@@ -96,7 +96,7 @@ export default function StaffEdit({ editFormData, setEditFormData, onSubmit, onC
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-bold transition-all shadow-md"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-bold transition-all shadow-md"
             >
               Save Changes
             </button>

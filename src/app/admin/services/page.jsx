@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import { fetchServices, createService, updateService, deleteService } from '@/lib/api';
 
 export default function ServicesManagement() {
   const { data: session, status } = useSession();
@@ -29,19 +30,10 @@ export default function ServicesManagement() {
     }
   }, [status, session, router]);
 
-  useEffect(() => {
-    if (session?.user?.role === 'ADMIN') {
-      fetchServices();
-    }
-  }, [session]);
-
-  const fetchServices = async () => {
+  const loadServices = async () => {
     try {
-      const response = await fetch('/api/services');
-      if (response.ok) {
-        const data = await response.json();
-        setServices(data.services || []);
-      }
+      const data = await fetchServices();
+      setServices(data);
     } catch (error) {
       console.error('Failed to fetch services:', error);
     } finally {
@@ -49,34 +41,29 @@ export default function ServicesManagement() {
     }
   };
 
+  useEffect(() => {
+    if (session?.user?.role === 'ADMIN') {
+      loadServices();
+    }
+  }, [session]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     try {
-      const url = editingService 
-        ? `/api/services/${editingService.id}`
-        : '/api/services';
-      
-      const method = editingService ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        setShowModal(false);
-        setEditingService(null);
-        setFormData({ name: '', description: '', duration: 30, price: 0, active: true });
-        fetchServices();
+      if (editingService) {
+        await updateService(editingService.id, formData);
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to save service');
+        await createService(formData);
       }
+      
+      setShowModal(false);
+      setEditingService(null);
+      setFormData({ name: '', description: '', duration: 30, price: 0, active: true });
+      loadServices();
     } catch (error) {
       console.error('Failed to save service:', error);
-      alert('Failed to save service');
+      alert(error.message || 'Failed to save service');
     }
   };
 
@@ -96,17 +83,11 @@ export default function ServicesManagement() {
     if (!confirm('Are you sure you want to delete this service?')) return;
 
     try {
-      const response = await fetch(`/api/services/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        fetchServices();
-      } else {
-        alert('Failed to delete service');
-      }
+      await deleteService(id);
+      loadServices();
     } catch (error) {
       console.error('Failed to delete service:', error);
+      alert(error.message || 'Failed to delete service');
     }
   };
 

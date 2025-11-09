@@ -158,6 +158,7 @@ export default function LoginPage() {
           <div className="text-xs text-gray-600 space-y-1">
             <p>Admin: admin@medflow.com / password123</p>
             <p>Doctor: dr.smith@medflow.com / password123</p>
+            <p>Receptionist: reception@medflow.com / password123</p>
             <p>Patient: lina.benali@email.com / password123</p>
           </div>
         </div>

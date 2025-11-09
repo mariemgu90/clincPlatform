@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import { fetchAdminStats } from '@/lib/api';
 
 export default function UserActivityReport() {
   const { data: session, status } = useSession();
@@ -29,11 +30,8 @@ export default function UserActivityReport() {
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch('/api/admin/stats');
-      if (response.ok) {
-        const data = await response.json();
-        setActivities(data.recentActivity || []);
-      }
+      const data = await fetchAdminStats();
+      setActivities(data.recentActivity || []);
     } catch (error) {
       console.error('Failed to fetch activities:', error);
     } finally {

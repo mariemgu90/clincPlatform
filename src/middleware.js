@@ -1,28 +1,87 @@
+import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
 
-export async function middleware(req) {
-  const token = await getToken({ req });
-  const url = req.nextUrl.clone();
+// Define role-based access for routes
+const roleAccess = {
+  '/admin': ['ADMIN'],
+  '/admin/*': ['ADMIN'],
+  '/dashboard': ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
+  '/patients': ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
+  '/patients/*': ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
+  '/calendar': ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
+  '/consultations': ['ADMIN', 'DOCTOR'],
+  '/consultations/*': ['ADMIN', 'DOCTOR'],
+  '/prescriptions': ['ADMIN', 'DOCTOR'],
+  '/prescriptions/*': ['ADMIN', 'DOCTOR', 'PATIENT'],
+  '/billing': ['ADMIN', 'RECEPTIONIST'],
+  '/billing/*': ['ADMIN', 'RECEPTIONIST'],
+  '/analytics': ['ADMIN'],
+  '/settings': ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'PATIENT'],
+  '/portal': ['PATIENT'],
+  '/portal/*': ['PATIENT'],
+};
 
-  // Redirect to login if no token is found
-  if (!token) {
-    url.pathname = '/auth/login';
-    return NextResponse.redirect(url);
+export default withAuth(
+  function middleware(req) {
+    const token = req.nextauth.token;
+    const path = req.nextUrl.pathname;
+
+    // Check if user is authenticated
+    if (!token) {
+      return NextResponse.redirect(new URL('/auth/signin', req.url));
+    }
+
+    // Check role-based access
+    for (const [route, allowedRoles] of Object.entries(roleAccess)) {
+      const routePattern = route.replace('/*', '');
+      
+      if (path.startsWith(routePattern)) {
+        if (!allowedRoles.includes(token.role)) {
+          // Redirect based on user role
+          const redirectPath = getRoleBasedRedirect(token.role);
+          return NextResponse.redirect(new URL(redirectPath, req.url));
+        }
+      }
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
   }
+);
 
-  // Role-based access control
-  const userRole = token.role;
-  const adminPaths = ['/admin', '/admin/dashboard', '/admin/clinics'];
-
-  if (adminPaths.some(path => req.nextUrl.pathname.startsWith(path)) && userRole !== 'ADMIN') {
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+function getRoleBasedRedirect(role) {
+  switch (role) {
+    case 'ADMIN':
+      return '/admin/dashboard';
+    case 'DOCTOR':
+      return '/dashboard';
+    case 'RECEPTIONIST':
+      return '/dashboard';
+    case 'PATIENT':
+      return '/portal/dashboard';
+    default:
+      return '/';
   }
-
-  return NextResponse.next();
 }
 
+// Protect all routes except public pages
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*', '/profile/:path*'],
+  matcher: [
+    // '/dashboard/:path*',
+    '/patients/:path*',
+    '/calendar/:path*',
+    '/consultations/:path*',
+    '/prescriptions/:path*',
+    '/billing/:path*',
+    '/analytics/:path*',
+    '/settings/:path*',
+    '/admin/:path*',
+    '/admin/clinics/:path*',
+    '/portal/:path*',
+
+  ],
 };

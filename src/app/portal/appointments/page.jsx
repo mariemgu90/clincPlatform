@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { fetchAppointments, cancelAppointment } from '@/lib/api';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 
@@ -22,21 +23,18 @@ export default function PatientAppointmentsPage() {
       if (session?.user?.role !== 'PATIENT') {
         router.push('/dashboard');
       } else {
-        fetchAppointments();
+        fetchAppointmentsData();
       }
     }
   }, [status, session, router]);
 
-  const fetchAppointments = async () => {
+  const fetchAppointmentsData = async () => {
     try {
-      const response = await fetch(`/api/appointments?patientId=${session?.user?.patientId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAppointments(data.appointments || []);
-      }
-      setLoading(false);
+      const data = await fetchAppointments({ patientId: session?.user?.patientId });
+      setAppointments(data || []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -45,22 +43,13 @@ export default function PatientAppointmentsPage() {
     if (!selectedAppointment) return;
 
     try {
-      const response = await fetch('/api/appointments', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: selectedAppointment.id,
-          status: 'CANCELLED',
-        }),
-      });
-
-      if (response.ok) {
-        fetchAppointments();
-        setShowCancelModal(false);
-        setSelectedAppointment(null);
-      }
+      await cancelAppointment(selectedAppointment.id);
+      fetchAppointmentsData();
+      setShowCancelModal(false);
+      setSelectedAppointment(null);
     } catch (error) {
       console.error('Error cancelling appointment:', error);
+      alert(error.message || 'Failed to cancel appointment. Please try again.');
     }
   };
 
@@ -117,7 +106,7 @@ export default function PatientAppointmentsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
       </div>
     );
@@ -126,7 +115,7 @@ export default function PatientAppointmentsPage() {
   const filteredAppointments = getFilteredAppointments();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
       <Header />
       <div className="flex">
         <Sidebar />
@@ -134,7 +123,7 @@ export default function PatientAppointmentsPage() {
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">
                 My Appointments
               </h1>
               <p className="text-gray-600">View and manage your scheduled appointments</p>
@@ -148,7 +137,7 @@ export default function PatientAppointmentsPage() {
                   onClick={() => setFilter(filterOption)}
                   className={`px-6 py-2 rounded-lg font-medium transition-all ${
                     filter === filterOption
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg'
                       : 'bg-white/70 backdrop-blur-xl text-gray-700 hover:shadow-lg'
                   }`}
                 >
@@ -161,7 +150,7 @@ export default function PatientAppointmentsPage() {
             <div className="mb-6">
               <button
                 onClick={() => router.push('/portal/book-appointment')}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg transition-all"
+                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg transition-all"
               >
                 📅 Book New Appointment
               </button>
@@ -179,7 +168,7 @@ export default function PatientAppointmentsPage() {
                 </p>
                 <button
                   onClick={() => router.push('/portal/book-appointment')}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:shadow-lg transition-all"
+                  className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg transition-all"
                 >
                   Book Your First Appointment
                 </button>
@@ -196,7 +185,7 @@ export default function PatientAppointmentsPage() {
                       <div className="flex-1">
                         <div className="flex items-start gap-4 mb-4">
                           {/* Doctor Avatar */}
-                          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
+                          <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
                             {appointment.doctor?.name?.charAt(0) || 'D'}
                           </div>
                           
@@ -257,7 +246,7 @@ export default function PatientAppointmentsPage() {
                         {appointment.status === 'COMPLETED' && (
                           <button
                             onClick={() => router.push(`/portal/medical-records?appointmentId=${appointment.id}`)}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all font-medium"
+                            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:shadow-lg transition-all font-medium"
                           >
                             View Record
                           </button>

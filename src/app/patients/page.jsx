@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import PatientForm from '@/components/PatientForm';
+import { fetchPatients } from '@/lib/api';
 
 export default function PatientsPage() {
   const { data: session, status } = useSession();
@@ -24,14 +25,13 @@ export default function PatientsPage() {
   }, [status, router]);
 
   useEffect(() => {
-    fetchPatients();
+    loadPatients();
   }, []);
 
-  const fetchPatients = async () => {
+  const loadPatients = async () => {
     try {
-      const res = await fetch('/api/patients');
-      const data = await res.json();
-      setPatients(data.patients || []);
+      const data = await fetchPatients();
+      setPatients(data);
     } catch (error) {
       console.error('Failed to fetch patients:', error);
     } finally {

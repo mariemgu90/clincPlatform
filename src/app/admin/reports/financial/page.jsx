@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import { fetchAdminStats } from '@/lib/api';
 
 export default function FinancialReport() {
   const { data: session, status } = useSession();
@@ -33,16 +34,13 @@ export default function FinancialReport() {
 
   const fetchFinancialData = async () => {
     try {
-      const response = await fetch('/api/admin/stats');
-      if (response.ok) {
-        const data = await response.json();
-        setStats({
-          totalRevenue: data.stats?.totalRevenue || 0,
-          totalExpenses: 0,
-          netProfit: data.stats?.totalRevenue || 0,
-          pendingPayments: 1,
-        });
-      }
+      const data = await fetchAdminStats();
+      setStats({
+        totalRevenue: data.stats?.totalRevenue || 0,
+        totalExpenses: 0,
+        netProfit: data.stats?.totalRevenue || 0,
+        pendingPayments: 1,
+      });
     } catch (error) {
       console.error('Failed to fetch financial data:', error);
     } finally {

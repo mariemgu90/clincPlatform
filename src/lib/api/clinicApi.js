@@ -42,17 +42,16 @@ export async function fetchStaff({ clinicId } = {}) {
     throw new Error('Failed to fetch staff');
   }
   const data = await res.json();
-  // normalize to return staff array or object containing staff
-  return data?.staff || data;
+  return Array.isArray(data) ? data : data.staff || [];
 }
 
 export async function fetchAllStaff() {
-  const res = await fetch('/api/staff');
+  const res = await fetch('/api/admin/staff');
   if (!res.ok) {
     throw new Error('Failed to fetch all staff');
   }
   const data = await res.json();
-  return Array.isArray(data) ? data : data.staff || data || [];
+  return Array.isArray(data) ? data : data.staff || [];
 }
 
 export async function fetchStaffByClinic(clinicId) {

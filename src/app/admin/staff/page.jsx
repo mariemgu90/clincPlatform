@@ -3,6 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { 
+  fetchStaff, 
+  createStaff, 
+  updateStaff, 
+  deleteStaff,
+  fetchRoles,
+  fetchClinics 
+} from '@/lib/api';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import StaffDetails from '@/components/StaffDetails';
@@ -48,19 +56,16 @@ export default function StaffManagement() {
 
   useEffect(() => {
     if (session?.user?.role === 'ADMIN') {
-      fetchStaff();
-      fetchRoles();
-      fetchClinics();
+      fetchStaffData();
+      fetchRolesData();
+      fetchClinicsData();
     }
   }, [session]);
 
-  const fetchStaff = async () => {
+  const fetchStaffData = async () => {
     try {
-      const response = await fetch('/api/admin/staff');
-      if (response.ok) {
-        const data = await response.json();
-        setStaff(data.staff || []);
-      }
+      const data = await fetchStaff();
+      setStaff(data || []);
     } catch (error) {
       console.error('Failed to fetch staff:', error);
     } finally {
@@ -68,25 +73,19 @@ export default function StaffManagement() {
     }
   };
 
-  const fetchRoles = async () => {
+  const fetchRolesData = async () => {
     try {
-      const response = await fetch('/api/roles');
-      if (response.ok) {
-        const data = await response.json();
-        setRoles(data);
-      }
+      const data = await fetchRoles();
+      setRoles(data);
     } catch (error) {
       console.error('Failed to fetch roles:', error);
     }
   };
 
-  const fetchClinics = async () => {
+  const fetchClinicsData = async () => {
     try {
-      const response = await fetch('/api/clinics');
-      if (response.ok) {
-        const data = await response.json();
-        setClinics(data);
-      }
+      const data = await fetchClinics();
+      setClinics(data);
     } catch (error) {
       console.error('Failed to fetch clinics:', error);
     }
@@ -95,23 +94,13 @@ export default function StaffManagement() {
   const handleAddStaff = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/admin/staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        setShowAddModal(false);
-        setFormData({ name: '', email: '', password: '', phone: '', role: '', clinicId: '' });
-        fetchStaff();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to add staff member');
-      }
+      await createStaff(formData);
+      setShowAddModal(false);
+      setFormData({ name: '', email: '', password: '', phone: '', role: '', clinicId: '' });
+      fetchStaffData();
     } catch (error) {
       console.error('Failed to add staff:', error);
-      alert('Failed to add staff member');
+      alert(error.message || 'Failed to add staff member');
     }
   };
 
@@ -119,18 +108,12 @@ export default function StaffManagement() {
     if (!confirm('Are you sure you want to delete this staff member?')) return;
 
     try {
-      const response = await fetch(`/api/admin/staff/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        fetchStaff();
-        setShowDetailsModal(false);
-      } else {
-        alert('Failed to delete staff member');
-      }
+      await deleteStaff(id);
+      fetchStaffData();
+      setShowDetailsModal(false);
     } catch (error) {
       console.error('Failed to delete staff:', error);
+      alert(error.message || 'Failed to delete staff member');
     }
   };
 
@@ -156,24 +139,13 @@ export default function StaffManagement() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`/api/admin/staff/${selectedStaff.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editFormData),
-      });
-
-      if (response.ok) {
-        fetchStaff();
-        setShowEditModal(false);
-        setSelectedStaff(null);
-      } else {
-        alert('Failed to update staff member');
-      }
+      await updateStaff(selectedStaff.id, editFormData);
+      fetchStaffData();
+      setShowEditModal(false);
+      setSelectedStaff(null);
     } catch (error) {
       console.error('Failed to update staff:', error);
-      alert('Failed to update staff member');
+      alert(error.message || 'Failed to update staff member');
     }
   };
 
