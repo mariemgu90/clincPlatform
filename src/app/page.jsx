@@ -1,8 +1,46 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect authenticated users to their specific dashboard
+    if (status === 'authenticated' && session?.user?.role) {
+      const role = session.user.role;
+      let dashboardPath = '/dashboard';
+      
+      if (role === 'ADMIN') {
+        dashboardPath = '/admin/dashboard';
+      } else if (role === 'PATIENT') {
+        dashboardPath = '/portal/dashboard';
+      } else if (role === 'DOCTOR' || role === 'RECEPTIONIST') {
+        dashboardPath = '/dashboard';
+      }
+      
+      router.push(dashboardPath);
+    }
+  }, [status, session, router]);
+
+  // Show loading while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"></div>
+      </div>
+    );
+  }
+
+  // Only show landing page for unauthenticated users
+  if (status === 'authenticated') {
+    return null; // Will redirect in useEffect
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated Background */}

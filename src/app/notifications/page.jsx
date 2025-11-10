@@ -5,6 +5,13 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
+import toast from 'react-hot-toast';
+import { 
+  fetchNotifications as getNotifications, 
+  markNotificationAsRead, 
+  markAllNotificationsAsRead, 
+  deleteNotification as removeNotification 
+} from '@/lib/api';
 
 export default function NotificationsPage() {
   const { data: session, status } = useSession();
@@ -16,84 +23,82 @@ export default function NotificationsPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
+    } else if (session) {
+      fetchNotifications();
     }
-  }, [status, router]);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  }, [status, session, router]);
 
   const fetchNotifications = async () => {
+    setLoading(true);
     try {
-      // Simulated notifications data
-      const mockNotifications = [
-        {
-          id: 1,
-          type: 'appointment',
-          title: 'New Appointment Booked',
-          message: 'John Doe has booked an appointment for tomorrow at 10:00 AM',
-          time: '5 minutes ago',
-          read: false,
-          icon: '📅',
-        },
-        {
-          id: 2,
-          type: 'payment',
-          title: 'Payment Received',
-          message: 'Payment of $150 received from Patient #4532',
-          time: '1 hour ago',
-          read: false,
-          icon: '💰',
-        },
-        {
-          id: 3,
-          type: 'reminder',
-          title: 'Upcoming Appointment',
-          message: 'You have 3 appointments scheduled for today',
-          time: '2 hours ago',
-          read: true,
-          icon: '⏰',
-        },
-        {
-          id: 4,
-          type: 'system',
-          title: 'System Update',
-          message: 'A new version of the system is available',
-          time: '1 day ago',
-          read: true,
-          icon: '🔔',
-        },
-        {
-          id: 5,
-          type: 'message',
-          title: 'New Message',
-          message: 'Dr. Smith sent you a message regarding patient consultation',
-          time: '2 days ago',
-          read: true,
-          icon: '💬',
-        },
-      ];
-      
-      setNotifications(mockNotifications);
+      const data = await getNotifications({});
+      setNotifications(data);
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error('Error fetching notifications:', error);
+      toast.error('Error loading notifications');
     } finally {
       setLoading(false);
     }
   };
 
-  const markAsRead = (id) => {
-    setNotifications(notifications.map(notif => 
-      notif.id === id ? { ...notif, read: true } : notif
-    ));
+  const markAsRead = async (id) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications(prev => 
+        prev.map(n => n.id === id ? { ...n, read: true } : n)
+      );
+      toast.success('Marked as read');
+    } catch (error) {
+      console.error('Error marking as read:', error);
+      toast.error('Failed to update notification');
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      toast.success('All notifications marked as read');
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+      toast.error('Failed to update notifications');
+    }
   };
 
-  const deleteNotification = (id) => {
-    setNotifications(notifications.filter(notif => notif.id !== id));
+  const deleteNotification = async (id) => {
+    try {
+      await removeNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      toast.success('Notification deleted');
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast.error('Failed to delete notification');
+    }
+  };  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'appointment': return '📅';
+      case 'payment': return '💰';
+      case 'reminder': return '⏰';
+      case 'prescription': return '💊';
+      case 'invoice': return '💵';
+      case 'message': return '✉️';
+      default: return '🔔';
+    }
+  };
+
+  const formatTime = (date) => {
+    const now = new Date();
+    const notifDate = new Date(date);
+    const diffMs = now - notifDate;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return notifDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const filteredNotifications = notifications.filter(notif => {
@@ -211,7 +216,7 @@ export default function NotificationsPage() {
                           ? 'bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md shadow-emerald-500/30' 
                           : 'bg-slate-100'
                       }`}>
-                        {notification.icon}
+                        {notification.icon || getNotificationIcon(notification.type)}
                       </div>
 
                       {/* Content */}
@@ -223,7 +228,7 @@ export default function NotificationsPage() {
                               <span className="ml-2 inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
                             )}
                           </h3>
-                          <span className="text-xs text-slate-500 whitespace-nowrap">{notification.time}</span>
+                          <span className="text-xs text-slate-500 whitespace-nowrap">{formatTime(notification.createdAt)}</span>
                         </div>
                         <p className={`text-sm ${!notification.read ? 'text-slate-700' : 'text-slate-500'} mb-3`}>
                           {notification.message}

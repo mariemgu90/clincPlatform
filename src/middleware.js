@@ -28,7 +28,15 @@ export default withAuth(
 
     // Check if user is authenticated
     if (!token) {
-      return NextResponse.redirect(new URL('/auth/signin', req.url));
+      return NextResponse.redirect(new URL('/auth/login', req.url));
+    }
+
+    // Redirect root dashboard based on role
+    if (path === '/dashboard') {
+      const redirectPath = getRoleBasedRedirect(token.role);
+      if (redirectPath !== '/dashboard') {
+        return NextResponse.redirect(new URL(redirectPath, req.url));
+      }
     }
 
     // Check role-based access
@@ -71,7 +79,8 @@ function getRoleBasedRedirect(role) {
 // Protect all routes except public pages
 export const config = {
   matcher: [
-    // '/dashboard/:path*',
+    '/dashboard/:path*',
+    '/dashboard',
     '/patients/:path*',
     '/calendar/:path*',
     '/consultations/:path*',
@@ -82,6 +91,5 @@ export const config = {
     '/admin/:path*',
     '/admin/clinics/:path*',
     '/portal/:path*',
-
   ],
 };

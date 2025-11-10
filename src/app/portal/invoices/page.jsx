@@ -13,6 +13,9 @@ export default function PatientInvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState([]);
   const [filter, setFilter] = useState('ALL'); // ALL, PENDING, PAID, CANCELLED
+  const [dateRange, setDateRange] = useState('all'); // all, thisMonth, lastMonth, thisYear
+  const [amountFilter, setAmountFilter] = useState('all'); // all, 0-100, 100-500, 500+
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
@@ -41,8 +44,39 @@ export default function PatientInvoicesPage() {
 
   const getFilteredInvoices = () => {
     return invoices.filter((invoice) => {
-      if (filter === 'ALL') return true;
-      return invoice.status === filter;
+      // Status filter
+      if (filter !== 'ALL' && invoice.status !== filter) return false;
+      
+      // Date range filter
+      if (dateRange !== 'all') {
+        const invoiceDate = new Date(invoice.createdAt);
+        const now = new Date();
+        
+        if (dateRange === 'thisMonth') {
+          if (invoiceDate.getMonth() !== now.getMonth() || invoiceDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        } else if (dateRange === 'lastMonth') {
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
+          if (invoiceDate.getMonth() !== lastMonth.getMonth() || invoiceDate.getFullYear() !== lastMonth.getFullYear()) {
+            return false;
+          }
+        } else if (dateRange === 'thisYear') {
+          if (invoiceDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        }
+      }
+      
+      // Amount filter
+      if (amountFilter !== 'all') {
+        const amount = invoice.totalAmount || invoice.amount || 0;
+        if (amountFilter === '0-100' && (amount < 0 || amount > 100)) return false;
+        if (amountFilter === '100-500' && (amount < 100 || amount > 500)) return false;
+        if (amountFilter === '500+' && amount < 500) return false;
+      }
+      
+      return true;
     });
   };
 
@@ -142,25 +176,104 @@ export default function PatientInvoicesPage() {
             </div>
 
             {/* Filter Buttons */}
-            <div className="mb-6 flex flex-wrap gap-3">
-              {['ALL', 'PENDING', 'PAID', 'CANCELLED'].map((filterOption) => (
-                <button
-                  key={filterOption}
-                  onClick={() => setFilter(filterOption)}
-                  className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                    filter === filterOption
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                      : 'bg-white/70 backdrop-blur-xl text-gray-700 hover:shadow-lg'
-                  }`}
-                >
-                  {filterOption.charAt(0) + filterOption.slice(1).toLowerCase()}
-                  {filterOption !== 'ALL' && (
-                    <span className="ml-2 px-2 py-0.5 bg-white/30 rounded-full text-xs">
-                      {invoices.filter((i) => i.status === filterOption).length}
-                    </span>
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-3 mb-4">
+                {['ALL', 'PENDING', 'PAID', 'CANCELLED'].map((filterOption) => (
+                  <button
+                    key={filterOption}
+                    onClick={() => setFilter(filterOption)}
+                    className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                      filter === filterOption
+                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                        : 'bg-white/70 backdrop-blur-xl text-gray-700 hover:shadow-lg'
+                    }`}
+                  >
+                    {filterOption.charAt(0) + filterOption.slice(1).toLowerCase()}
+                    {filterOption !== 'ALL' && (
+                      <span className="ml-2 px-2 py-0.5 bg-white/30 rounded-full text-xs">
+                        {invoices.filter((i) => i.status === filterOption).length}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Advanced Filters Toggle */}
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="flex items-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-700"
+              >
+                <svg className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
+              </button>
+
+              {/* Advanced Filters */}
+              {showAdvancedFilters && (
+                <div className="mt-4 bg-white/70 backdrop-blur-xl rounded-xl p-4 border border-white/20">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Date Range Filter */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Date Range
+                      </label>
+                      <select
+                        value={dateRange}
+                        onChange={(e) => setDateRange(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all outline-none bg-white"
+                      >
+                        <option value="all">All Time</option>
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="thisYear">This Year</option>
+                      </select>
+                    </div>
+
+                    {/* Amount Filter */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Amount Range
+                      </label>
+                      <select
+                        value={amountFilter}
+                        onChange={(e) => setAmountFilter(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all outline-none bg-white"
+                      >
+                        <option value="all">All Amounts</option>
+                        <option value="0-100">$0 - $100</option>
+                        <option value="100-500">$100 - $500</option>
+                        <option value="500+">$500+</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Clear Filters */}
+                  {(dateRange !== 'all' || amountFilter !== 'all') && (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        onClick={() => {
+                          setDateRange('all');
+                          setAmountFilter('all');
+                        }}
+                        className="text-sm text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Clear Advanced Filters
+                      </button>
+                    </div>
                   )}
-                </button>
-              ))}
+                </div>
+              )}
+
+              {/* Results Count */}
+              <div className="mt-4">
+                <p className="text-sm text-gray-600">
+                  Showing <span className="font-semibold text-purple-600">{filteredInvoices.length}</span> of <span className="font-semibold">{invoices.length}</span> invoices
+                </p>
+              </div>
             </div>
 
             {/* Invoices List */}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
+import { notifyNewInvoice, notifyPaymentReceived } from '@/lib/notificationService';
 
 export async function GET(request) {
   try {
@@ -117,10 +118,24 @@ export async function POST(request) {
             lastName: true,
             email: true,
             phone: true,
+            userId: true,
           },
         },
       },
     });
+
+    // Send notification to patient about new invoice
+    if (invoice.patient.userId) {
+      try {
+        await notifyNewInvoice({
+          userId: invoice.patient.userId,
+          invoice,
+          clinicId: session.user.clinicId,
+        });
+      } catch (error) {
+        console.error('Error sending invoice notification:', error);
+      }
+    }
 
     return NextResponse.json(invoice, { status: 201 });
   } catch (error) {
@@ -175,10 +190,24 @@ export async function PATCH(request) {
             lastName: true,
             email: true,
             phone: true,
+            userId: true,
           },
         },
       },
     });
+
+    // Send notification for paid invoices
+    if (status === 'PAID' && invoice.patient.userId) {
+      try {
+        await notifyPaymentReceived({
+          userId: invoice.patient.userId,
+          invoice,
+          clinicId: session.user.clinicId,
+        });
+      } catch (error) {
+        console.error('Error sending payment notification:', error);
+      }
+    }
 
     return NextResponse.json(invoice);
   } catch (error) {
