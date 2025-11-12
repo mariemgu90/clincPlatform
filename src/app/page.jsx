@@ -54,7 +54,7 @@ export default function Home() {
 
       {/* Navigation */}
       <nav className="relative z-10 glass-dark border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg">
@@ -84,7 +84,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <main className="relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center space-y-8 animate-fade-in">
             {/* Badge */}
             <div className="inline-flex items-center space-x-2 glass-dark text-white px-4 py-2 rounded-full text-sm">

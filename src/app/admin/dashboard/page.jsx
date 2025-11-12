@@ -152,8 +152,8 @@ export default function AdminDashboard() {
       <Header user={session?.user} clinicName="MedFlow Admin" />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-8 ml-64">
-          <div className="max-w-7xl mx-auto bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 rounded-3xl p-8 shadow-2xl">
+        <main className="flex-1 p-8">
+          <div className="mx-auto bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 rounded-3xl p-8 shadow-2xl">
             {/* Welcome Section */}
             <div className="mb-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-8 shadow-lg shadow-emerald-500/30">
               <h1 className="text-4xl font-bold text-white mb-2">

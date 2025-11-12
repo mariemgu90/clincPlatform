@@ -466,8 +466,8 @@ export default function ClinicDetailPage() {
         <Header />
         <div className="flex">
           <Sidebar />
-          <div className="flex-1 p-8 ml-64">
-            <div className="max-w-7xl mx-auto">
+          <div className="flex-1 p-8">
+            <div className="mx-auto">
               <button onClick={handleBackToList} className="mb-6 flex items-center gap-2 text-white hover:text-emerald-400">
                 ← Back to Clinics List
               </button>
@@ -488,8 +488,8 @@ export default function ClinicDetailPage() {
       <Header />
       <div className="flex">
         <Sidebar />
-        <div className="flex-1 p-8 ml-64">
-          <div className="max-w-7xl mx-auto">
+        <div className="flex-1 p-8">
+          <div className="mx-auto">
             <button onClick={handleBackToList} className="mb-6 flex items-center gap-2 text-white hover:text-emerald-400">
               ← Back to Clinics List
             </button>

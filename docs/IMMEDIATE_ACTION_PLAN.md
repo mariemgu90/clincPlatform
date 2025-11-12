@@ -129,7 +129,7 @@ export default function DashboardLoading() {
 
 **Replace**:
 ```javascript
-<main className="flex-1 p-8 ml-64">
+<main className="flex-1 p-8">
 ```
 
 **With**:

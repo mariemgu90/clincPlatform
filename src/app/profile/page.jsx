@@ -103,7 +103,7 @@ export default function ProfilePage() {
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-8 ml-64">
+        <main className="flex-1 p-8">
           <div className="max-w-5xl mx-auto bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 rounded-3xl p-8 shadow-2xl">
             {/* Header Section */}
             <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-8 mb-6 shadow-lg shadow-emerald-500/30">

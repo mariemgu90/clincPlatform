@@ -115,7 +115,7 @@ export default function ServicesManagement() {
       <div className="flex">
         <Sidebar />
         <main className="flex-1 p-8 bg-gradient-to-br from-slate-50 to-slate-100">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto">
             {/* Header */}
             <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-8 mb-8 shadow-xl shadow-emerald-500/20">
               <div className="flex items-center justify-between">

@@ -119,7 +119,7 @@ export default function PatientAppointmentsPage() {
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-8 ml-64">
+        <main className="flex-1 p-8">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="mb-8">

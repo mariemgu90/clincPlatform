@@ -79,7 +79,7 @@ export default function Dashboard() {
       <div className="flex">
         <Sidebar items={items} />
         <main className="flex-1 p-8 bg-gradient-to-br from-slate-50 to-slate-100">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto">
             {/* Welcome Header */}
             <div className="mb-8 animate-slide-up bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-8 shadow-xl shadow-emerald-500/20">
               <h1 className="text-4xl font-bold text-white">

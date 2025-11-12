@@ -891,8 +891,8 @@ export default function ClinicsManagement() {
         <Header />
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 p-8 ml-64">
-            <div className="max-w-7xl mx-auto">
+          <main className="flex-1 p-8">
+            <div className="mx-auto">
               <div className="mb-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-8 shadow-lg shadow-emerald-500/30">
                 <div className="flex items-center justify-between">
                   <div>

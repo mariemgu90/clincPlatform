@@ -165,7 +165,7 @@ export default function PatientPortal() {
       <div className="flex">
         <Sidebar />
         <main className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto">
             {/* Welcome Section */}
             <div className="mb-8">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">
