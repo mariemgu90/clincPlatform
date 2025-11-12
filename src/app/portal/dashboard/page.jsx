@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { fetchPortalStats } from '@/lib/api';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
@@ -100,9 +101,19 @@ export default function PatientPortal() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-    } else if (session?.user?.role !== 'PATIENT') {
-      router.push('/dashboard');
+      router.push('/auth/login');
+    } else if (status === 'authenticated') {
+      const role = session?.user?.role;
+      if (role !== 'PATIENT') {
+        // Redirect non-patient users to their specific dashboards
+        if (role === 'ADMIN') {
+          router.push('/admin/dashboard');
+        } else if (role === 'DOCTOR' || role === 'RECEPTIONIST') {
+          router.push('/dashboard');
+        } else {
+          router.push('/');
+        }
+      }
     }
   }, [status, session, router]);
 
@@ -123,7 +134,7 @@ export default function PatientPortal() {
       );
       setPatientInfo(data?.patient || null);
     } catch (error) {
-      console.error('Failed to fetch patient data:', error);
+      toast.error('Failed to fetch patient data');
     } finally {
       setLoading(false);
     }

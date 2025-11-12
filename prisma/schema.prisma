@@ -63,6 +63,9 @@ model User {
   // Notifications
   notifications Notification[] // Reverse relation for notifications
   
+  // Audit logs
+  auditLogs     AuditLog[]
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -89,6 +92,9 @@ model Clinic {
   
   // Notifications
   notifications Notification[] // Reverse relation for notifications
+  
+  // Audit logs
+  auditLogs     AuditLog[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -429,4 +435,44 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// Audit Log model - for compliance and security
+model AuditLog {
+  id          String   @id @default(cuid())
+  
+  // Actor information
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userEmail   String?  // Store email in case user is deleted
+  userRole    String?  // Store role at time of action
+  
+  // Action details
+  action      String   // LOGIN, LOGOUT, CREATE, UPDATE, DELETE, VIEW, DOWNLOAD, etc.
+  resource    String   // PATIENT, APPOINTMENT, INVOICE, PRESCRIPTION, etc.
+  resourceId  String?  // ID of the affected resource
+  
+  // Request metadata
+  ipAddress   String?
+  userAgent   String?
+  method      String?  // HTTP method: GET, POST, PUT, DELETE, etc.
+  endpoint    String?  // API endpoint
+  
+  // Additional context
+  changes     Json?    // Before/after values for updates
+  metadata    Json?    // Additional contextual information
+  status      String   @default("SUCCESS") // SUCCESS, FAILURE, UNAUTHORIZED
+  errorMessage String? // Error details if status is FAILURE
+  
+  // Clinic context for multi-tenancy
+  clinicId    String?
+  clinic      Clinic?  @relation(fields: [clinicId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([clinicId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import StatsCard from '../../components/StatsCard';
@@ -20,9 +21,19 @@ export default function Dashboard() {
     if (status === 'unauthenticated') {
       router.push('/auth/login');
     } else if (status === 'authenticated') {
+      // Redirect ADMIN and PATIENT users to their specific dashboards
+      const role = session?.user?.role;
+      if (role === 'ADMIN') {
+        router.push('/admin/dashboard');
+        return;
+      } else if (role === 'PATIENT') {
+        router.push('/portal/dashboard');
+        return;
+      }
+      // DOCTOR and RECEPTIONIST can access this dashboard
       fetchDashboardData();
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   const fetchDashboardData = async () => {
     try {
@@ -36,7 +47,7 @@ export default function Dashboard() {
       setRecentPatients(patientsData);
       setUpcomingAppointments(appointmentsData.slice(0, 5) || []);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to fetch dashboard data');
     } finally {
       setLoading(false);
     }

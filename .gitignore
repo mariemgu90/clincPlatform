@@ -40,8 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Ignore all markdown files
-*.md
+# # Ignore all markdown files
+# *.md
 
-# But do NOT ignore README.md
-!README.md
+# # But do NOT ignore README.md
+# !README.md

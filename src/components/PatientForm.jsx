@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { createPatient, updatePatient } from '@/lib/api';
 
 // Validation schema
 const patientSchema = z.object({
@@ -65,28 +66,17 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
     setIsSubmitting(true);
 
     try {
-      const url = patient ? `/api/patients/${patient.id}` : '/api/patients';
-      const method = patient ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to save patient');
+      if (patient) {
+        await updatePatient(patient.id, data);
+        toast.success('Patient updated successfully!');
+      } else {
+        const result = await createPatient(data);
+        toast.success('Patient created successfully!');
+        if (onSuccess) onSuccess(result);
       }
 
-      toast.success(patient ? 'Patient updated successfully!' : 'Patient created successfully!');
       reset();
-      if (onSuccess) onSuccess(result);
     } catch (error) {
-      console.error('Error saving patient:', error);
       toast.error(error.message || 'Failed to save patient');
     } finally {
       setIsSubmitting(false);

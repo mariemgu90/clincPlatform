@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { notifyAppointmentConfirmed, notifyAppointmentCancelled } from '@/lib/notificationService';
 
 // GET /api/appointments - Get all appointments
 export async function GET(request) {
@@ -135,11 +136,34 @@ export async function POST(request) {
         clinicId: user.clinicId,
       },
       include: {
-        patient: true,
+        patient: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            email: true,
+            userId: true,
+          },
+        },
         doctor: true,
         service: true,
       },
     });
+
+    // Send notification to patient if they have a user account
+    if (appointment.patient.userId) {
+      try {
+        await notifyAppointmentConfirmed({
+          userId: appointment.patient.userId,
+          appointment,
+          clinicId: user.clinicId,
+        });
+      } catch (error) {
+        console.error('Error sending appointment notification:', error);
+        // Don't fail the request if notification fails
+      }
+    }
 
     return NextResponse.json(appointment, { status: 201 });
   } catch (error) {
@@ -234,6 +258,7 @@ export async function PATCH(request) {
             lastName: true,
             phone: true,
             email: true,
+            userId: true,
           },
         },
         doctor: {
@@ -246,6 +271,20 @@ export async function PATCH(request) {
         service: true,
       },
     });
+
+    // Send notification for cancelled appointments
+    if (status === 'CANCELLED' && updatedAppointment.patient.userId) {
+      try {
+        await notifyAppointmentCancelled({
+          userId: updatedAppointment.patient.userId,
+          appointment: updatedAppointment,
+          clinicId: user.clinicId,
+          reason: notes || '',
+        });
+      } catch (error) {
+        console.error('Error sending cancellation notification:', error);
+      }
+    }
 
     return NextResponse.json(updatedAppointment);
   } catch (error) {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { fetchConsultations } from '@/lib/api';
@@ -31,7 +32,7 @@ export default function ConsultationsPage() {
       const data = await fetchConsultations();
       setConsultations(data);
     } catch (error) {
-      console.error('Failed to fetch consultations:', error);
+      toast.error('Failed to fetch consultations');
     } finally {
       setLoading(false);
     }

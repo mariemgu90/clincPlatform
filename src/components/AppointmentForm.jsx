@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { formatDateForInput, formatTimeForInput, combineDateAndTime } from '@/lib/utils';
+import { fetchPatients, fetchStaff, fetchServices, createAppointment, updateAppointment } from '@/lib/api';
 
 // Validation schema
 const appointmentSchema = z.object({
@@ -75,21 +76,16 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [patientsRes, doctorsRes, servicesRes] = await Promise.all([
-          fetch('/api/patients'),
-          fetch('/api/admin/staff'),
-          fetch('/api/services'),
+        const [patientsData, doctorsData, servicesData] = await Promise.all([
+          fetchPatients({}),
+          fetchStaff({}),
+          fetchServices({}),
         ]);
-
-        const patientsData = await patientsRes.json();
-        const doctorsData = await doctorsRes.json();
-        const servicesData = await servicesRes.json();
 
         setPatients(patientsData.patients || []);
         setDoctors((doctorsData.staff || []).filter(s => s.role === 'DOCTOR'));
         setServices(servicesData || []);
       } catch (error) {
-        console.error('Failed to fetch data:', error);
         toast.error('Failed to load form data');
       } finally {
         setLoadingData(false);
@@ -138,28 +134,17 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
         status: data.status,
       };
 
-      const url = appointment ? `/api/appointments/${appointment.id}` : '/api/appointments';
-      const method = appointment ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to save appointment');
+      if (appointment) {
+        await updateAppointment(appointment.id, payload);
+        toast.success('Appointment updated successfully!');
+      } else {
+        const result = await createAppointment(payload);
+        toast.success('Appointment created successfully!');
+        if (onSuccess) onSuccess(result);
       }
 
-      toast.success(appointment ? 'Appointment updated successfully!' : 'Appointment created successfully!');
       reset();
-      if (onSuccess) onSuccess(result);
     } catch (error) {
-      console.error('Error saving appointment:', error);
       toast.error(error.message || 'Failed to save appointment');
     } finally {
       setIsSubmitting(false);

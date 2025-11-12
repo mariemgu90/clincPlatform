@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import PatientForm from '@/components/PatientForm';
@@ -15,6 +16,9 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGender, setFilterGender] = useState('all');
+  const [filterBloodType, setFilterBloodType] = useState('all');
+  const [filterAgeRange, setFilterAgeRange] = useState('all');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
 
@@ -33,7 +37,7 @@ export default function PatientsPage() {
       const data = await fetchPatients();
       setPatients(data);
     } catch (error) {
-      console.error('Failed to fetch patients:', error);
+      toast.error('Failed to fetch patients');
     } finally {
       setLoading(false);
     }
@@ -47,8 +51,19 @@ export default function PatientsPage() {
       patient.phone?.includes(searchTerm);
     
     const matchesGender = filterGender === 'all' || patient.gender === filterGender;
+    const matchesBloodType = filterBloodType === 'all' || patient.bloodType === filterBloodType;
     
-    return matchesSearch && matchesGender;
+    // Age range filter
+    let matchesAge = true;
+    if (filterAgeRange !== 'all' && patient.dateOfBirth) {
+      const age = calculateAge(patient.dateOfBirth);
+      if (filterAgeRange === '0-17') matchesAge = age >= 0 && age <= 17;
+      else if (filterAgeRange === '18-35') matchesAge = age >= 18 && age <= 35;
+      else if (filterAgeRange === '36-55') matchesAge = age >= 36 && age <= 55;
+      else if (filterAgeRange === '56+') matchesAge = age >= 56;
+    }
+    
+    return matchesSearch && matchesGender && matchesBloodType && matchesAge;
   });
 
   const handleViewPatient = (patient) => {
@@ -129,7 +144,7 @@ export default function PatientsPage() {
               {/* Gender Filter */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Filter by Gender
+                  Gender
                 </label>
                 <select
                   value={filterGender}
@@ -144,17 +159,83 @@ export default function PatientsPage() {
               </div>
             </div>
 
-            {/* Results Count */}
+            {/* Advanced Filters Toggle */}
+            <div className="mt-4">
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+              >
+                <svg className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
+              </button>
+            </div>
+
+            {/* Advanced Filters */}
+            {showAdvancedFilters && (
+              <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 animate-slideDown">
+                {/* Blood Type Filter */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Blood Type
+                  </label>
+                  <select
+                    value={filterBloodType}
+                    onChange={(e) => setFilterBloodType(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none bg-white"
+                  >
+                    <option value="all">All Blood Types</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+
+                {/* Age Range Filter */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Age Range
+                  </label>
+                  <select
+                    value={filterAgeRange}
+                    onChange={(e) => setFilterAgeRange(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none bg-white"
+                  >
+                    <option value="all">All Ages</option>
+                    <option value="0-17">0-17 years (Children)</option>
+                    <option value="18-35">18-35 years (Young Adults)</option>
+                    <option value="36-55">36-55 years (Adults)</option>
+                    <option value="56+">56+ years (Seniors)</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Results Count and Clear */}
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-slate-600">
                 Showing <span className="font-semibold text-emerald-600">{filteredPatients.length}</span> of <span className="font-semibold">{patients.length}</span> patients
               </p>
-              {searchTerm && (
+              {(searchTerm || filterGender !== 'all' || filterBloodType !== 'all' || filterAgeRange !== 'all') && (
                 <button
-                  onClick={() => setSearchTerm('')}
-                  className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterGender('all');
+                    setFilterBloodType('all');
+                    setFilterAgeRange('all');
+                  }}
+                  className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
                 >
-                  Clear Search
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear All Filters
                 </button>
               )}
             </div>

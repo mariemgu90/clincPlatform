@@ -11,7 +11,10 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:setup": "prisma generate && prisma db push && node prisma/seed.js",
+    "setup": "npm install && prisma generate && prisma db push && node prisma/seed.js",
+    "dev:full": "prisma generate && next dev"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

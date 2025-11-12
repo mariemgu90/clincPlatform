@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { fetchUsers } from '@/lib/api';
@@ -28,7 +29,7 @@ export default function UsersManagement() {
       const data = await fetchUsers();
       setUsers(data);
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      toast.error('Failed to fetch users');
     } finally {
       setLoading(false);
     }

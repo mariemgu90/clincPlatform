@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { fetchAdminStats as getAdminStats } from '@/lib/api';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
@@ -28,9 +29,19 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-    } else if (session?.user?.role !== 'ADMIN') {
-      router.push('/dashboard');
+      router.push('/auth/login');
+    } else if (status === 'authenticated') {
+      const role = session?.user?.role;
+      if (role !== 'ADMIN') {
+        // Redirect non-admin users to their specific dashboards
+        if (role === 'PATIENT') {
+          router.push('/portal/dashboard');
+        } else if (role === 'DOCTOR' || role === 'RECEPTIONIST') {
+          router.push('/dashboard');
+        } else {
+          router.push('/');
+        }
+      }
     }
   }, [status, session, router]);
 
@@ -46,7 +57,7 @@ export default function AdminDashboard() {
       setStats(data.stats);
       setRecentActivity(data.recentActivity || []);
     } catch (error) {
-      console.error('Failed to fetch admin stats:', error);
+      toast.error('Failed to fetch admin stats');
     } finally {
       setLoading(false);
     }
