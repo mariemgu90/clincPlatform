@@ -1,4 +1,11 @@
 import { NextResponse } from 'next/server';
+/**
+ * @openapi
+ * {
+ *   "get": { "summary": "List staff (admin)", "responses": { "200": { "description": "Staff list" } } },
+ *   "post": { "summary": "Create staff member", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" }, "email": { "type": "string" }, "password": { "type": "string" }, "role": { "type": "string" } }, "required": ["name","email","password","role"] } } } }, "responses": { "201": { "description": "Created" } } }
+ * }
+ */
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';

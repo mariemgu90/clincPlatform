@@ -129,6 +129,10 @@ model Patient {
   allergies       String?
   currentMedications String?
   
+  // Insurance info
+  insuranceProvider String?
+  insuranceNumber String?
+  
   // Clinic relationship
   clinicId        String
   clinic          Clinic    @relation(fields: [clinicId], references: [id])
@@ -156,8 +160,8 @@ model Service {
   price       Float
   active      Boolean  @default(true)
   
-  clinicId    String
-  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  clinicId    String?
+  clinic      Clinic?  @relation(fields: [clinicId], references: [id])
   
   appointments Appointment[]
   invoiceItems InvoiceItem[]

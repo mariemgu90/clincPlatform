@@ -16,7 +16,9 @@ export async function fetchStaff({ clinicId, role } = {}) {
   if (!response.ok) {
     throw new Error('Failed to fetch staff');
   }
-  return response.json();
+  const data = await response.json();
+  // Normalize response - handle both array and object with staff property
+  return Array.isArray(data) ? data : data.staff || [];
 }
 
 /**
@@ -66,8 +68,20 @@ export async function updateStaff(id, data) {
   });
   
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to update staff member');
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to update staff member';
+    try {
+      const body = await response.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch (jsonErr) {
+      try {
+        const text = await response.text();
+        if (text) errMsg = text;
+      } catch (_e) {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
   }
   
   return response.json();
@@ -122,6 +136,47 @@ export async function fetchDoctorSchedule(doctorId, date) {
   
   if (!response.ok) {
     throw new Error('Failed to fetch doctor schedule');
+  }
+  
+  return response.json();
+}
+
+/**
+ * Unlink staff member from clinic
+ * @param {string} staffId - Staff member ID
+ * @returns {Promise<Object>} Updated staff member
+ */
+export async function unlinkStaffFromClinic(staffId) {
+  const response = await fetch(`/api/admin/staff/${staffId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clinicId: null }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to unlink staff from clinic');
+  }
+  
+  return response.json();
+}
+
+/**
+ * Link staff member to clinic
+ * @param {string} staffId - Staff member ID
+ * @param {string} clinicId - Clinic ID
+ * @returns {Promise<Object>} Updated staff member
+ */
+export async function linkStaffToClinic(staffId, clinicId) {
+  const response = await fetch(`/api/admin/staff/${staffId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clinicId }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to link staff to clinic');
   }
   
   return response.json();

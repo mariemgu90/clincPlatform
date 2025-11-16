@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import toast from 'react-hot-toast';
-import { createPatient, updatePatient } from '@/lib/api';
 
 // Validation schema
 const patientSchema = z.object({
@@ -33,8 +31,16 @@ const patientSchema = z.object({
   insuranceNumber: z.string().max(50, 'Insurance number is too long').optional(),
 });
 
-export default function PatientForm({ patient = null, onSuccess, onCancel }) {
+export default function PatientForm({
+  patient = null,
+  onCancel,
+  onCreatePatient,
+  onUpdatePatient,
+
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+
 
   const {
     register,
@@ -62,22 +68,40 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
     },
   });
 
+  useEffect(() => {
+    if (patient) {
+      reset({
+        id: patient.id,
+        firstName: patient.firstName || '',
+        lastName: patient.lastName || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        dateOfBirth: patient.dateOfBirth ? patient.dateOfBirth.split('T')[0] : '',
+        gender: patient.gender ? patient.gender?.toUpperCase() : 'MALE',
+        bloodType: patient.bloodType || '',
+        address: patient.address || '',
+        emergencyContact: patient.emergencyContact || '',
+        emergencyPhone: patient.emergencyPhone || '',
+        allergies: patient.allergies || '',
+        currentMedications: patient.currentMedications || '',
+        medicalHistory: patient.medicalHistory || '',
+        insuranceProvider: patient.insuranceProvider || '',
+        insuranceNumber: patient.insuranceNumber || '',
+      });
+    }
+  }, [patient, reset]);
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
-
+    
     try {
       if (patient) {
-        await updatePatient(patient.id, data);
-        toast.success('Patient updated successfully!');
+        await onUpdatePatient(patient.id, data);
       } else {
-        const result = await createPatient(data);
-        toast.success('Patient created successfully!');
-        if (onSuccess) onSuccess(result);
+        await onCreatePatient(data);
       }
-
-      reset();
     } catch (error) {
-      toast.error(error.message || 'Failed to save patient');
+      console.error('Error submitting form:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -102,9 +126,8 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
             <input
               type="text"
               {...register('firstName')}
-              className={`w-full px-4 py-2 rounded-lg border-2 ${
-                errors.firstName ? 'border-red-500' : 'border-gray-200'
-              } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              className={`w-full px-4 py-2 rounded-lg border-2 ${errors.firstName ? 'border-red-500' : 'border-gray-200'
+                } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
               placeholder="John"
             />
             {errors.firstName && (
@@ -120,9 +143,8 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
             <input
               type="text"
               {...register('lastName')}
-              className={`w-full px-4 py-2 rounded-lg border-2 ${
-                errors.lastName ? 'border-red-500' : 'border-gray-200'
-              } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              className={`w-full px-4 py-2 rounded-lg border-2 ${errors.lastName ? 'border-red-500' : 'border-gray-200'
+                } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
               placeholder="Doe"
             />
             {errors.lastName && (
@@ -138,9 +160,8 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
             <input
               type="date"
               {...register('dateOfBirth')}
-              className={`w-full px-4 py-2 rounded-lg border-2 ${
-                errors.dateOfBirth ? 'border-red-500' : 'border-gray-200'
-              } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              className={`w-full px-4 py-2 rounded-lg border-2 ${errors.dateOfBirth ? 'border-red-500' : 'border-gray-200'
+                } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
               max={new Date().toISOString().split('T')[0]}
             />
             {errors.dateOfBirth && (
@@ -155,10 +176,11 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
             </label>
             <select
               {...register('gender')}
-              className={`w-full px-4 py-2 rounded-lg border-2 ${
-                errors.gender ? 'border-red-500' : 'border-gray-200'
-              } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              className={`w-full px-4 py-2 rounded-lg border-2 ${errors.gender ? 'border-red-500' : 'border-gray-200'
+                } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              defaultValue={patient ? patient.gender?.toUpperCase() : ''}
             >
+              <option value="">Select Gender</option>
               <option value="MALE">Male</option>
               <option value="FEMALE">Female</option>
               <option value="OTHER">Other</option>
@@ -208,9 +230,8 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
             <input
               type="tel"
               {...register('phone')}
-              className={`w-full px-4 py-2 rounded-lg border-2 ${
-                errors.phone ? 'border-red-500' : 'border-gray-200'
-              } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              className={`w-full px-4 py-2 rounded-lg border-2 ${errors.phone ? 'border-red-500' : 'border-gray-200'
+                } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
               placeholder="+1 (555) 123-4567"
             />
             {errors.phone && (
@@ -226,9 +247,8 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
             <input
               type="email"
               {...register('email')}
-              className={`w-full px-4 py-2 rounded-lg border-2 ${
-                errors.email ? 'border-red-500' : 'border-gray-200'
-              } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              className={`w-full px-4 py-2 rounded-lg border-2 ${errors.email ? 'border-red-500' : 'border-gray-200'
+                } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
               placeholder="john.doe@example.com"
             />
             {errors.email && (
@@ -244,9 +264,8 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
             <textarea
               {...register('address')}
               rows={2}
-              className={`w-full px-4 py-2 rounded-lg border-2 ${
-                errors.address ? 'border-red-500' : 'border-gray-200'
-              } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              className={`w-full px-4 py-2 rounded-lg border-2 ${errors.address ? 'border-red-500' : 'border-gray-200'
+                } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
               placeholder="123 Main Street, City, State, ZIP"
             />
             {errors.address && (
@@ -284,9 +303,8 @@ export default function PatientForm({ patient = null, onSuccess, onCancel }) {
             <input
               type="tel"
               {...register('emergencyPhone')}
-              className={`w-full px-4 py-2 rounded-lg border-2 ${
-                errors.emergencyPhone ? 'border-red-500' : 'border-gray-200'
-              } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+              className={`w-full px-4 py-2 rounded-lg border-2 ${errors.emergencyPhone ? 'border-red-500' : 'border-gray-200'
+                } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
               placeholder="+1 (555) 987-6543"
             />
             {errors.emergencyPhone && (

@@ -3,129 +3,186 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const permissions = [
-  // Patients
-  { name: 'view_patients', label: 'View Patients', category: 'Patients', description: 'View patient records and information' },
-  { name: 'edit_patients', label: 'Edit Patients', category: 'Patients', description: 'Edit and update patient information' },
-  { name: 'delete_patients', label: 'Delete Patients', category: 'Patients', description: 'Delete patient records' },
-  
-  // Appointments
-  { name: 'view_appointments', label: 'View Appointments', category: 'Appointments', description: 'View appointment schedule' },
-  { name: 'create_appointments', label: 'Create Appointments', category: 'Appointments', description: 'Book new appointments' },
-  { name: 'edit_appointments', label: 'Edit Appointments', category: 'Appointments', description: 'Modify appointment details' },
-  { name: 'delete_appointments', label: 'Delete Appointments', category: 'Appointments', description: 'Cancel appointments' },
-  
-  // Consultations
-  { name: 'view_consultations', label: 'View Consultations', category: 'Consultations', description: 'View consultation records' },
-  { name: 'create_consultations', label: 'Create Consultations', category: 'Consultations', description: 'Create new consultations' },
-  { name: 'edit_consultations', label: 'Edit Consultations', category: 'Consultations', description: 'Edit consultation notes' },
-  
-  // Prescriptions
-  { name: 'view_prescriptions', label: 'View Prescriptions', category: 'Prescriptions', description: 'View prescription records' },
-  { name: 'create_prescriptions', label: 'Create Prescriptions', category: 'Prescriptions', description: 'Write new prescriptions' },
-  { name: 'edit_prescriptions', label: 'Edit Prescriptions', category: 'Prescriptions', description: 'Modify prescriptions' },
-  
-  // Staff
-  { name: 'view_staff', label: 'View Staff', category: 'Staff', description: 'View staff members' },
-  { name: 'manage_staff', label: 'Manage Staff', category: 'Staff', description: 'Add, edit, and remove staff' },
-  
-  // Reports
-  { name: 'view_reports', label: 'View Reports', category: 'Reports', description: 'View analytics and reports' },
-  
-  // Settings
-  { name: 'manage_settings', label: 'Manage Settings', category: 'Settings', description: 'Manage system settings' },
-  { name: 'manage_roles', label: 'Manage Roles', category: 'Settings', description: 'Manage roles and permissions' },
-];
+// Define role permissions mapping
+const rolePermissions = {
+  ADMIN: [
+    // Full access to everything
+    'view_patients', 'create_patients', 'edit_patients', 'delete_patients',
+    'view_appointments', 'create_appointments', 'edit_appointments', 'delete_appointments',
+    'view_consultations', 'create_consultations', 'edit_consultations', 'delete_consultations',
+    'view_prescriptions', 'create_prescriptions', 'edit_prescriptions', 'delete_prescriptions',
+    'view_invoices', 'create_invoices', 'edit_invoices', 'delete_invoices',
+    'view_staff', 'create_staff', 'edit_staff', 'delete_staff',
+    'view_services', 'create_services', 'edit_services', 'delete_services',
+    'view_clinics', 'create_clinics', 'edit_clinics', 'delete_clinics',
+    'view_reports', 'manage_settings', 'manage_roles'
+  ],
+  DOCTOR: [
+    // Patient and clinical access
+    'view_patients', 'create_patients', 'edit_patients',
+    'view_appointments', 'create_appointments', 'edit_appointments',
+    'view_consultations', 'create_consultations', 'edit_consultations',
+    'view_prescriptions', 'create_prescriptions', 'edit_prescriptions',
+    'view_invoices',
+    'view_services',
+    'view_reports'
+  ],
+  RECEPTIONIST: [
+    // Front desk and administrative access
+    'view_patients', 'create_patients', 'edit_patients',
+    'view_appointments', 'create_appointments', 'edit_appointments', 'delete_appointments',
+    'view_consultations',
+    'view_invoices', 'create_invoices', 'edit_invoices',
+    'view_services',
+    'view_staff'
+  ],
+  PATIENT: [
+    // Limited self-service access
+    'view_appointments',
+    'view_consultations',
+    'view_prescriptions',
+    'view_invoices'
+  ]
+};
 
+// Role descriptions and colors
 const defaultRoles = [
   {
-    name: 'Doctor',
-    description: 'Full access to patient care and medical records',
-    color: 'blue',
+    name: 'Admin',
+    description: 'Full system access with all permissions',
+    color: '#EF4444',
     staffCount: 0,
-    permissions: [
-      'view_patients', 'edit_patients', 
-      'view_appointments', 'create_appointments', 'edit_appointments',
-      'view_consultations', 'create_consultations', 'edit_consultations',
-      'view_prescriptions', 'create_prescriptions', 'edit_prescriptions'
-    ],
+    roleKey: 'ADMIN'
+  },
+  {
+    name: 'Doctor',
+    description: 'Medical professional with patient care permissions',
+    color: '#3B82F6',
+    staffCount: 0,
+    roleKey: 'DOCTOR'
   },
   {
     name: 'Receptionist',
-    description: 'Manage appointments and patient registration',
-    color: 'emerald',
+    description: 'Front desk staff with appointment and billing access',
+    color: '#10B981',
     staffCount: 0,
-    permissions: [
-      'view_patients', 'edit_patients',
-      'view_appointments', 'create_appointments', 'edit_appointments', 'delete_appointments'
-    ],
+    roleKey: 'RECEPTIONIST'
   },
   {
-    name: 'Nurse',
-    description: 'Patient care and assistance',
-    color: 'purple',
+    name: 'Patient',
+    description: 'Patient portal access with view-only permissions',
+    color: '#8B5CF6',
     staffCount: 0,
-    permissions: [
-      'view_patients', 
-      'view_appointments', 
-      'view_consultations', 
-      'view_prescriptions'
-    ],
-  },
+    roleKey: 'PATIENT'
+  }
 ];
 
-async function seedPermissions() {
-  console.log('🌱 Seeding permissions...');
-  
-  for (const perm of permissions) {
-    await prisma.permission.upsert({
-      where: { name: perm.name },
-      update: perm,
-      create: perm,
-    });
-  }
-  
-  console.log('✅ Permissions seeded successfully!');
-}
-
 async function seedRoles() {
-  console.log('🌱 Seeding default roles...');
-  
-  for (const roleData of defaultRoles) {
-    const { permissions: permNames, ...roleInfo } = roleData;
-    
-    // Check if role exists
-    const existingRole = await prisma.role.findFirst({
-      where: { name: roleInfo.name },
-    });
-    
-    if (!existingRole) {
-      await prisma.role.create({
-        data: {
-          ...roleInfo,
-          permissions: {
-            create: permNames.map(permName => ({
-              permission: {
-                connect: { name: permName },
-              },
-            })),
+  console.log('👥 Seeding roles...');
+
+  try {
+    // Check if permissions exist
+    const permissionCount = await prisma.permission.count();
+    if (permissionCount === 0) {
+      console.log('⚠️  No permissions found in database. Please run seed-permissions.mjs first.');
+      console.log('Run: node prisma/seed-permissions.mjs');
+      process.exit(1);
+    }
+
+    console.log(`✅ Found ${permissionCount} permissions in database`);
+
+    // Delete existing role permissions (but keep roles if they exist)
+    await prisma.rolePermission.deleteMany({});
+    console.log('🧹 Cleaned up existing role permissions');
+
+    // Create or update each role
+    for (const roleData of defaultRoles) {
+      const { roleKey, ...roleInfo } = roleData;
+      console.log(`\n📝 Processing role: ${roleInfo.name}`);
+
+      // Get permission IDs for this role
+      const permissionNames = rolePermissions[roleKey];
+      const permissions = await prisma.permission.findMany({
+        where: {
+          name: {
+            in: permissionNames
+          }
+        }
+      });
+
+      if (permissions.length !== permissionNames.length) {
+        const foundNames = permissions.map(p => p.name);
+        const missing = permissionNames.filter(p => !foundNames.includes(p));
+        console.log(`⚠️  Warning: Missing permissions for ${roleInfo.name}:`, missing);
+      }
+
+      // Create or update the role
+      let role = await prisma.role.findFirst({
+        where: { name: roleInfo.name }
+      });
+
+      if (role) {
+        // Update existing role
+        role = await prisma.role.update({
+          where: { id: role.id },
+          data: {
+            description: roleInfo.description,
+            color: roleInfo.color,
+          },
+        });
+        console.log(`✅ Updated existing role: ${role.name} (${role.id})`);
+      } else {
+        // Create new role
+        role = await prisma.role.create({
+          data: {
+            name: roleInfo.name,
+            description: roleInfo.description,
+            color: roleInfo.color,
+            staffCount: roleInfo.staffCount || 0,
+          },
+        });
+        console.log(`✅ Created new role: ${role.name} (${role.id})`);
+      }
+
+      // Assign permissions to the role
+      for (const permission of permissions) {
+        await prisma.rolePermission.create({
+          data: {
+            roleId: role.id,
+            permissionId: permission.id,
+          },
+        });
+      }
+
+      console.log(`   ✓ Assigned ${permissions.length} permissions to ${role.name}`);
+    }
+
+    // Summary
+    console.log('\n📊 Seeding Summary:');
+    const roles = await prisma.role.findMany({
+      include: {
+        permissions: {
+          include: {
+            permission: true,
           },
         },
-      });
-      console.log(`✅ Created role: ${roleInfo.name}`);
-    } else {
-      console.log(`⏭️  Role ${roleInfo.name} already exists, skipping...`);
+      },
+    });
+
+    for (const role of roles) {
+      console.log(`   • ${role.name}: ${role.permissions.length} permissions`);
     }
+
+  } catch (error) {
+    console.error('❌ Error seeding roles:', error);
+    throw error;
   }
-  
-  console.log('✅ Roles seeded successfully!');
 }
 
 async function main() {
   try {
-    await seedPermissions();
     await seedRoles();
-    console.log('🎉 Database seeded successfully!');
+    console.log('\n🎉 Roles seeding completed successfully!');
   } catch (error) {
     console.error('❌ Error seeding database:', error);
     throw error;

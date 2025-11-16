@@ -67,9 +67,22 @@ export async function updateConsultation(id, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to update consultation');
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to update consultation';
+    try {
+      const body = await res.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch (jsonErr) {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch (_e) {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
   }
   return await res.json();
 }

@@ -14,9 +14,7 @@ export default function StatCard({
     const router = useRouter();
   
   return (
-    <div
-onClick={() => link && router.push(link)}
-
+    <div onClick={() => link && router.push(link)}
       className={`bg-white rounded-2xl shadow-md border border-slate-200 p-4 flex items-center justify-between ${className}`}
     >
       <div className="flex items-center gap-3">
@@ -26,4 +24,4 @@ onClick={() => link && router.push(link)}
       <p className={`text-3xl font-bold ${valueColor}`}>{value}</p>
     </div>
   );
-}
+} 

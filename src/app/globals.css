@@ -75,9 +75,9 @@ body {
 
 /* Enhanced focus indicators for accessibility */
 *:focus-visible {
-  outline: 3px solid #10b981;
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: 1px solid #10b981;
+  /* outline-offset: 1px; */
+  /* border-radius: 4px; */
 }
 
 /* Remove default focus for mouse users */
@@ -316,3 +316,18 @@ body {
   box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
   transform: translateY(-2px);
 }
+
+/* ========================================
+   Form input defaults (project-wide)
+   These styles are applied to plain inputs so existing
+   components don't need class changes. Uses Tailwind @apply
+   to keep utility parity with the select control.
+   ======================================== */
+.form-input,
+/* Apply to most textual inputs while excluding controls like checkboxes, radios, files and buttons */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea {
+  @apply w-full pl-11 pr-4 py-3 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none bg-white text-base text-slate-700 placeholder-slate-400;
+}
+
+/* Keep select styling separate to avoid unintended overrides */

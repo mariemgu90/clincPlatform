@@ -59,9 +59,22 @@ export async function updateStaff(id, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to update staff member');
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to update staff member';
+    try {
+      const body = await res.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch (jsonErr) {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch (_e) {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
   }
   return await res.json();
 }
@@ -95,7 +108,9 @@ export async function fetchUsers({ role } = {}) {
     throw new Error('Failed to fetch users');
   }
   const data = await res.json();
-  return data.users || [];
+        
+
+  return Array.isArray(data?.users) ? data?.users : [];
 }
 
 /**
@@ -104,10 +119,11 @@ export async function fetchUsers({ role } = {}) {
  */
 export async function fetchRoles() {
   const res = await fetch('/api/roles');
-  if (!res.ok) {
+  if (res.ok !== true) {
     throw new Error('Failed to fetch roles');
   }
   const data = await res.json();
+  
   return Array.isArray(data) ? data : data.roles || [];
 }
 
@@ -122,9 +138,22 @@ export async function createRole(data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to create role');
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to create role';
+    try {
+      const body = await res.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch (jsonErr) {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch (_e) {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
   }
   return await res.json();
 }
@@ -141,9 +170,22 @@ export async function updateRole(id, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to update role');
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to update role';
+    try {
+      const body = await res.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch (jsonErr) {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch (_e) {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
   }
   return await res.json();
 }

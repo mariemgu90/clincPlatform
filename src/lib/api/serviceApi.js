@@ -65,9 +65,22 @@ export async function updateService(id, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to update service');
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to update service';
+    try {
+      const body = await res.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch (jsonErr) {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch (_e) {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
   }
   return await res.json();
 }
@@ -86,4 +99,41 @@ export async function deleteService(id) {
     throw new Error(error.error || 'Failed to delete service');
   }
   return true;
+}
+
+/**
+ * Link service to clinic
+ * @param {string} serviceId - Service ID
+ * @param {string} clinicId - Clinic ID
+ * @returns {Promise<Object>} Updated service
+ */
+export async function linkServiceToClinic(serviceId, clinicId) {
+  const res = await fetch(`/api/services/${serviceId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clinicId }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to link service to clinic');
+  }
+  return await res.json();
+}
+
+/**
+ * Unlink service from clinic
+ * @param {string} serviceId - Service ID
+ * @returns {Promise<Object>} Updated service
+ */
+export async function unlinkServiceFromClinic(serviceId) {
+  const res = await fetch(`/api/services/${serviceId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clinicId: null }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to unlink service from clinic');
+  }
+  return await res.json();
 }

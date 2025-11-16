@@ -98,7 +98,7 @@ export default function Sidebar({ items }) {
       },
       {
         label: 'Settings',
-        href: '/settings',
+        href: '/admin/settings',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -342,16 +342,16 @@ export default function Sidebar({ items }) {
         </nav>
 
         {/* Quick Actions */}
-        {!collapsed && userRole !== 'PATIENT' && (
+        {!collapsed && userRole === 'ADMIN' && (
           <div className="absolute bottom-4 left-4 right-4 space-y-2">
             <Link 
-              href={userRole === 'ADMIN' ? '/admin/staff' : '/calendar'}
+              href={userRole === 'ADMIN' ? '/admin/staff' :  '/calendar'}
               className="w-full px-4 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-semibold shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 transition-all flex items-center justify-center space-x-2 group"
             >
               <svg className="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              <span className="text-sm">{userRole === 'ADMIN' ? 'Add Staff' : 'New Appointment'}</span>
+              <span className="text-sm">{userRole === 'ADMIN' ? 'Add Staff' : 'Appointment'}</span>
             </Link>
           </div>
         )}

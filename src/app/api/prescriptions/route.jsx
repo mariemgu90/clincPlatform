@@ -1,4 +1,11 @@
 import { NextResponse } from 'next/server';
+/**
+ * @openapi
+ * {
+ *   "get": { "summary": "List prescriptions", "parameters": [ { "name": "patientId", "in": "query", "schema": { "type": "string" } }, { "name": "consultationId", "in": "query", "schema": { "type": "string" } } ], "responses": { "200": { "description": "List" } } },
+ *   "post": { "summary": "Create prescription", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "patientId": { "type": "string" }, "medications": { "type": "array", "items": { "type": "object" } } }, "required": ["patientId","medications"] } } } }, "responses": { "201": { "description": "Created" } } }
+ * }
+ */
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';

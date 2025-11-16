@@ -1,4 +1,30 @@
 import { NextResponse } from 'next/server';
+/**
+ * @openapi
+ * {
+ *   "get": {
+ *     "summary": "List appointments",
+ *     "parameters": [
+ *       { "name": "startDate", "in": "query", "schema": { "type": "string" } },
+ *       { "name": "endDate", "in": "query", "schema": { "type": "string" } },
+ *       { "name": "doctorId", "in": "query", "schema": { "type": "string" } },
+ *       { "name": "patientId", "in": "query", "schema": { "type": "string" } },
+ *       { "name": "status", "in": "query", "schema": { "type": "string" } }
+ *     ],
+ *     "responses": { "200": { "description": "List of appointments" } }
+ *   },
+ *   "post": {
+ *     "summary": "Create appointment",
+ *     "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "patientId": { "type": "string" }, "doctorId": { "type": "string" }, "serviceId": { "type": "string" }, "startTime": { "type": "string" }, "endTime": { "type": "string" }, "notes": { "type": "string" } }, "required": ["patientId","doctorId","startTime","endTime"] } } } },
+ *     "responses": { "201": { "description": "Created" }, "400": { "description": "Validation error" } }
+ *   },
+ *   "patch": {
+ *     "summary": "Update appointment status",
+ *     "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "string" }, "status": { "type": "string" }, "notes": { "type": "string" } }, "required": ["id","status"] } } } },
+ *     "responses": { "200": { "description": "Updated" }, "404": { "description": "Not found" } }
+ *   }
+ * }
+ */
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { notifyAppointmentConfirmed, notifyAppointmentCancelled } from '@/lib/notificationService';

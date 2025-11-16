@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useSession } from 'next-auth/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
@@ -32,12 +33,15 @@ const appointmentSchema = z.object({
 });
 
 export default function AppointmentForm({ appointment = null, preselectedDate = null, preselectedPatient = null, onSuccess, onCancel }) {
+  const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [services, setServices] = useState([]);
+  const [allServices, setAllServices] = useState([]);
+  const [filteredServices, setFilteredServices] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   const {
     register,
@@ -71,34 +75,82 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
 
   const watchedServiceId = watch('serviceId');
   const watchedStartTime = watch('startTime');
+  const watchedDoctorId = watch('doctorId');
 
-  // Fetch patients, doctors, and services
+  // Fetch patients, doctors, and services filtered by clinic
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoadError(null);
+        const clinicId = session?.user?.clinicId;
+
+        if (!clinicId) {
+          setLoadError('No clinic associated with your account');
+          toast.error('No clinic associated with your account');
+          setLoadingData(false);
+          return;
+        }
+
         const [patientsData, doctorsData, servicesData] = await Promise.all([
-          fetchPatients({}),
-          fetchStaff({}),
-          fetchServices({}),
+          fetchPatients({ clinicId }),
+          fetchStaff({ clinicId }),
+          fetchServices({ clinicId, activeOnly: true }),
         ]);
 
-        setPatients(patientsData.patients || []);
-        setDoctors((doctorsData.staff || []).filter(s => s.role === 'DOCTOR'));
-        setServices(servicesData || []);
+        // Set patients from clinic
+        const patientsList = patientsData?.patients || patientsData || [];
+        setPatients(Array.isArray(patientsList) ? patientsList : []);
+
+        // Set doctors from clinic
+        const doctorsList = doctorsData?.staff || doctorsData || [];
+        const filteredDoctors = Array.isArray(doctorsList) 
+          ? doctorsList.filter(s => s.role === 'DOCTOR')
+          : [];
+        setDoctors(filteredDoctors);
+
+        // Set all services from clinic
+        const servicesList = servicesData?.services || servicesData || [];
+        setAllServices(Array.isArray(servicesList) ? servicesList : []);
+        setFilteredServices(Array.isArray(servicesList) ? servicesList : []);
+
+        if (filteredDoctors.length === 0) {
+          toast.error('No doctors found in your clinic');
+        }
+        if (patientsList.length === 0) {
+          toast.error('No patients found in your clinic');
+        }
+
       } catch (error) {
+        console.error('Failed to load form data:', error);
+        setLoadError(error.message || 'Failed to load form data');
         toast.error('Failed to load form data');
       } finally {
         setLoadingData(false);
       }
     };
 
-    fetchData();
-  }, []);
+    if (session?.user?.clinicId) {
+      fetchData();
+    } else {
+      setLoadingData(false);
+    }
+  }, [session]);
+
+  // Filter services when doctor changes
+  useEffect(() => {
+    if (watchedDoctorId && allServices.length > 0) {
+      // For now, show all clinic services
+      // In the future, you can filter by doctor's specialization or assigned services
+      setFilteredServices(allServices);
+    } else {
+      setFilteredServices(allServices);
+    }
+  }, [watchedDoctorId, allServices]);
 
   // Auto-calculate end time when service or start time changes
   useEffect(() => {
     if (watchedServiceId && watchedStartTime) {
-      const service = services.find(s => s.id === watchedServiceId);
+      const service = filteredServices.find(s => s.id === watchedServiceId);
       if (service && service.duration) {
         const [hours, minutes] = watchedStartTime.split(':').map(Number);
         const startMinutes = hours * 60 + minutes;
@@ -110,7 +162,7 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
         setSelectedService(service);
       }
     }
-  }, [watchedServiceId, watchedStartTime, services, setValue]);
+  }, [watchedServiceId, watchedStartTime, filteredServices, setValue]);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -154,7 +206,26 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
   if (loadingData) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-emerald-500"></div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="text-red-500 text-lg font-semibold mb-2">⚠️ Error Loading Form</div>
+          <p className="text-gray-600">{loadError}</p>
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="mt-4 px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+            >
+              Close
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -170,14 +241,18 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
           {...register('patientId')}
           className={`w-full px-4 py-3 rounded-lg border-2 ${
             errors.patientId ? 'border-red-500' : 'border-gray-200'
-          } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+          } focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-base font-semibold text-slate-900`}
         >
           <option value="">Select a patient</option>
-          {patients.map(patient => (
-            <option key={patient.id} value={patient.id}>
-              {patient.firstName} {patient.lastName} - {patient.phone}
-            </option>
-          ))}
+          {patients.length === 0 ? (
+            <option disabled>No patients available in this clinic</option>
+          ) : (
+            patients.map(patient => (
+              <option key={patient.id} value={patient.id}>
+                {patient.firstName} {patient.lastName} - {patient.phone}
+              </option>
+            ))
+          )}
         </select>
         {errors.patientId && (
           <p className="mt-1 text-sm text-red-500">{errors.patientId.message}</p>
@@ -193,14 +268,18 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
           {...register('doctorId')}
           className={`w-full px-4 py-3 rounded-lg border-2 ${
             errors.doctorId ? 'border-red-500' : 'border-gray-200'
-          } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+          } focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-base font-semibold text-slate-900`}
         >
           <option value="">Select a doctor</option>
-          {doctors.map(doctor => (
-            <option key={doctor.id} value={doctor.id}>
-              Dr. {doctor.name} - {doctor.email}
-            </option>
-          ))}
+          {doctors.length === 0 ? (
+            <option disabled>No doctors available in this clinic</option>
+          ) : (
+            doctors.map(doctor => (
+              <option key={doctor.id} value={doctor.id}>
+                Dr. {doctor.name} - {doctor.email}
+              </option>
+            ))
+          )}
         </select>
         {errors.doctorId && (
           <p className="mt-1 text-sm text-red-500">{errors.doctorId.message}</p>
@@ -214,14 +293,18 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
         </label>
         <select
           {...register('serviceId')}
-          className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900"
+          className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-base font-semibold text-slate-900"
         >
           <option value="">No specific service</option>
-          {services.map(service => (
-            <option key={service.id} value={service.id}>
-              {service.name} - {service.duration} min - ${service.price}
-            </option>
-          ))}
+          {filteredServices.length === 0 ? (
+            <option disabled>No services available</option>
+          ) : (
+            filteredServices.map(service => (
+              <option key={service.id} value={service.id}>
+                {service.name} - {service.duration} min - ${service.price}
+              </option>
+            ))
+          )}
         </select>
         {selectedService && (
           <p className="mt-2 text-sm text-gray-600 bg-purple-50 p-3 rounded-lg">
@@ -243,7 +326,7 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
             min={new Date().toISOString().split('T')[0]}
             className={`w-full px-4 py-3 rounded-lg border-2 ${
               errors.date ? 'border-red-500' : 'border-gray-200'
-            } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+            } focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-base font-semibold text-slate-900`}
           />
           {errors.date && (
             <p className="mt-1 text-sm text-red-500">{errors.date.message}</p>
@@ -260,7 +343,7 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
             {...register('startTime')}
             className={`w-full px-4 py-3 rounded-lg border-2 ${
               errors.startTime ? 'border-red-500' : 'border-gray-200'
-            } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+            } focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-base font-semibold text-slate-900`}
           />
           {errors.startTime && (
             <p className="mt-1 text-sm text-red-500">{errors.startTime.message}</p>
@@ -277,7 +360,7 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
             {...register('endTime')}
             className={`w-full px-4 py-3 rounded-lg border-2 ${
               errors.endTime ? 'border-red-500' : 'border-gray-200'
-            } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+            } focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-base font-semibold text-slate-900`}
           />
           {errors.endTime && (
             <p className="mt-1 text-sm text-red-500">{errors.endTime.message}</p>
@@ -292,7 +375,7 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
         </label>
         <select
           {...register('status')}
-          className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900"
+          className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-base font-semibold text-slate-900"
         >
           <option value="SCHEDULED">Scheduled</option>
           <option value="CONFIRMED">Confirmed</option>
@@ -309,7 +392,7 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
           rows={3}
           className={`w-full px-4 py-3 rounded-lg border-2 ${
             errors.notes ? 'border-red-500' : 'border-gray-200'
-          } focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-base font-semibold text-slate-900`}
+          } focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-base font-semibold text-slate-900`}
           placeholder="Any special notes or requirements..."
         />
         {errors.notes && (

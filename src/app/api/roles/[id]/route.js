@@ -18,6 +18,30 @@ export async function PUT(request, { params }) {
     const { id } = params;
     const { name, description, permissions, color } = await request.json();
 
+    // Validate permissions exist if provided
+    if (permissions && permissions.length > 0) {
+      const existingPermissions = await prisma.permission.findMany({
+        where: {
+          name: {
+            in: permissions,
+          },
+        },
+      });
+
+      if (existingPermissions.length !== permissions.length) {
+        const foundNames = existingPermissions.map(p => p.name);
+        const missingPermissions = permissions.filter(p => !foundNames.includes(p));
+        return NextResponse.json(
+          { 
+            error: 'Some permissions do not exist in the database',
+            message: `Missing permissions: ${missingPermissions.join(', ')}. Please seed the database with permissions first.`,
+            missingPermissions 
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Delete existing permissions
     await prisma.rolePermission.deleteMany({
       where: { roleId: id },
@@ -30,13 +54,13 @@ export async function PUT(request, { params }) {
         name,
         description,
         color,
-        permissions: {
+        permissions: permissions && permissions.length > 0 ? {
           create: permissions.map(permissionName => ({
             permission: {
               connect: { name: permissionName },
             },
           })),
-        },
+        } : undefined,
       },
       include: {
         permissions: {

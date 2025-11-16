@@ -20,10 +20,12 @@ export async function fetchPatients({ clinicId, page, limit, search } = {}) {
   const url = '/api/patients' + (params.toString() ? `?${params.toString()}` : '');
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error('Failed to fetch patients');
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch patients');
   }
   const data = await res.json();
-  return data?.patients || data;
+  // Normalize response - handle both array and object with patients property
+  return Array.isArray(data) ? data : data?.patients || [];
 }
 
 /**
@@ -69,12 +71,26 @@ export async function updatePatient(id, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to update patient');
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to update patient';
+    try {
+      const body = await res.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
   }
   return await res.json();
 }
+
 
 /**
  * Delete a patient

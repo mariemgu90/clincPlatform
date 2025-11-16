@@ -3,6 +3,46 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 
+/**
+ * @openapi
+ * {
+ *   "get": {
+ *     "summary": "List clinics",
+ *     "responses": {
+ *       "200": {
+ *         "description": "Array of clinics",
+ *         "content": {
+ *           "application/json": {
+ *             "schema": { "type": "array", "items": { "type": "object" } }
+ *           }
+ *         }
+ *       }
+ *     },
+ *     "security": [{ "cookieAuth": [] }]
+ *   },
+ *   "post": {
+ *     "summary": "Create clinic",
+ *     "requestBody": {
+ *       "required": true,
+ *       "content": {
+ *         "application/json": {
+ *           "schema": {
+ *             "type": "object",
+ *             "properties": {
+ *               "name": { "type": "string" },
+ *               "address": { "type": "string" },
+ *               "phone": { "type": "string" },
+ *               "email": { "type": "string" }
+ *             },
+ *             "required": ["name","address","phone","email"]
+ *           }
+ *         }
+ *       }
+ *     },
+ *     "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "type": "object" } } } } }
+ *   }
+ * }
+ */
 // GET /api/clinics - Get all clinics
 export async function GET(request) {
   try {

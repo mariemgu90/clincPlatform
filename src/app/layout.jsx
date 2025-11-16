@@ -3,6 +3,7 @@ import "./globals.css";
 import AuthProvider from '@/components/AuthProvider';
 import { I18nProvider } from '@/lib/i18n/i18nContext';
 import { Toaster } from 'react-hot-toast';
+import { RootQueryProvider } from '@/components/providers/RootQueryProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,38 +40,40 @@ export default function RootLayout({ children }) {
         
         <I18nProvider>
           <AuthProvider>
-            <main id="main-content" role="main">
-              {children}
-            </main>
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-                success: {
-                  duration: 3000,
-                  iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#fff',
-                  },
-                },
-                error: {
+            <RootQueryProvider>
+              <main id="main-content" role="main">
+                {children}
+              </main>
+              <Toaster 
+                position="top-right"
+                toastOptions={{
                   duration: 4000,
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
                   },
-                },
-              }}
-              // Accessibility for toast notifications
-              ariaProps={{
-                role: 'status',
-                'aria-live': 'polite',
-              }}
-            />
+                  success: {
+                    duration: 3000,
+                    iconTheme: {
+                      primary: '#10b981',
+                      secondary: '#fff',
+                    },
+                  },
+                  error: {
+                    duration: 4000,
+                    iconTheme: {
+                      primary: '#ef4444',
+                      secondary: '#fff',
+                    },
+                  },
+                }}
+                // Accessibility for toast notifications
+                ariaProps={{
+                  role: 'status',
+                  'aria-live': 'polite',
+                }}
+              />
+            </RootQueryProvider>
           </AuthProvider>
         </I18nProvider>
       </body>

@@ -73,12 +73,22 @@ export async function updateAppointment(id, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, ...data }),
   });
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    const message =
-      error?.error || error?.message || (Array.isArray(error?.errors) ? error.errors.join(', ') : null) ||
-      (typeof error === 'string' ? error : null) || res.statusText || 'Failed to update appointment';
-    throw new Error(message);
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to update appointment';
+    try {
+      const body = await res.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch (jsonErr) {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch (_e) {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
   }
   return await res.json();
 }

@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Batch update script for remaining pages
+# This script provides commands to update all remaining pages
+
+echo "=========================================="
+echo "Remaining Pages Update Commands"
+echo "=========================================="
+echo ""
+echo "Run these commands to update remaining pages:"
+echo ""
+
+# List all pages that need updating
+pages=(
+  "src/app/(app)/analytics/page.jsx"
+  "src/app/(app)/calendar/page.jsx"
+  "src/app/(app)/profile/page.jsx"
+  "src/app/(app)/consultations/page.jsx"
+  "src/app/(app)/admin/clinics/page.jsx"
+  "src/app/(app)/admin/clinics/[id]/page.jsx"
+  "src/app/(app)/admin/services/page.jsx"
+  "src/app/(app)/admin/users/page.jsx"
+  "src/app/(app)/admin/reports/audit/page.jsx"
+  "src/app/(app)/admin/reports/activity/page.jsx"
+  "src/app/(app)/admin/reports/financial/page.jsx"
+  "src/app/(app)/portal/dashboard/page.jsx"
+  "src/app/(app)/portal/appointments/page.jsx"
+  "src/app/(app)/portal/book-appointment/page.jsx"
+  "src/app/(app)/portal/medical-records/page.jsx"
+  "src/app/(app)/portal/prescriptions/page.jsx"
+  "src/app/(app)/portal/invoices/page.jsx"
+)
+
+count=1
+for page in "${pages[@]}"; do
+  echo "$count. Update $page"
+  echo "   - Remove: useSession, useRouter, Header, Sidebar imports"
+  echo "   - Remove: authentication useEffect"
+  echo "   - Simplify: loading check"
+  echo "   - Remove: layout wrapper divs"
+  echo "   - Add: RoleGuard if needed (for admin/role-specific pages)"
+  echo ""
+  ((count++))
+done
+
+echo "=========================================="
+echo "Pattern to Follow:"
+echo "=========================================="
+echo ""
+echo "1. Remove imports:"
+echo "   import { useSession } from 'next-auth/react';"
+echo "   import { useRouter } from 'next/navigation';"
+echo "   import Header from '@/components/Header';"
+echo "   import Sidebar from '@/components/Sidebar';"
+echo ""
+echo "2. Remove state:"
+echo "   const { data: session, status } = useSession();"
+echo "   const router = useRouter();"
+echo ""
+echo "3. Remove auth useEffect:"
+echo "   useEffect(() => {"
+echo "     if (status === 'unauthenticated') {"
+echo "       router.push('/auth/signin');"
+echo "     }"
+echo "   }, [status, router]);"
+echo ""
+echo "4. Update loading check:"
+echo "   FROM: if (status === 'loading' || loading)"
+echo "   TO:   if (loading)"
+echo ""
+echo "5. Update return structure:"
+echo "   FROM: <div className='min-h-screen...><Header/><Sidebar/><main>...</main></div>"
+echo "   TO:   <>{/* content */}</>"
+echo ""
+echo "6. For ADMIN pages, wrap with RoleGuard:"
+echo "   <RoleGuard allowedRoles={['ADMIN']}>{/* content */}</RoleGuard>"
+echo ""
+echo "=========================================="
+echo "✅ Already Updated: 23 pages"
+echo "❌ Remaining: 17 pages"
+echo "=========================================="

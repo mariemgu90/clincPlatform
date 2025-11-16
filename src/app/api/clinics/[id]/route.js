@@ -3,6 +3,30 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 
+/**
+ * @openapi
+ * {
+ *   "get": {
+ *     "summary": "Get clinic by id",
+ *     "responses": {
+ *       "200": { "description": "Clinic object", "content": { "application/json": { "schema": { "type": "object" } } } },
+ *       "404": { "description": "Clinic not found" }
+ *     }
+ *   },
+ *   "put": {
+ *     "summary": "Update clinic",
+ *     "requestBody": {
+ *       "required": true,
+ *       "content": { "application/json": { "schema": { "type": "object" } } }
+ *     },
+ *     "responses": { "200": { "description": "Updated clinic" }, "404": { "description": "Not found" } }
+ *   },
+ *   "delete": {
+ *     "summary": "Delete clinic",
+ *     "responses": { "200": { "description": "Deleted" }, "400": { "description": "Cannot delete with dependencies" } }
+ *   }
+ * }
+ */
 // GET /api/clinics/[id] - Get a specific clinic
 export async function GET(request, { params }) {
   try {

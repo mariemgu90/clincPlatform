@@ -1,4 +1,24 @@
 import { NextResponse } from 'next/server';
+/**
+ * @openapi
+ * {
+ *   "get": {
+ *     "summary": "List patients",
+ *     "parameters": [
+ *       { "name": "search", "in": "query", "schema": { "type": "string" } },
+ *       { "name": "page", "in": "query", "schema": { "type": "integer" } },
+ *       { "name": "limit", "in": "query", "schema": { "type": "integer" } },
+ *       { "name": "clinicId", "in": "query", "schema": { "type": "string" } }
+ *     ],
+ *     "responses": { "200": { "description": "Paginated patients" } }
+ *   },
+ *   "post": {
+ *     "summary": "Create patient",
+ *     "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "firstName": { "type": "string" }, "lastName": { "type": "string" }, "dateOfBirth": { "type": "string" }, "phone": { "type": "string" } }, "required": ["firstName","lastName","dateOfBirth","phone"] } } } },
+ *     "responses": { "201": { "description": "Created" }, "400": { "description": "Validation error" } }
+ *   }
+ * }
+ */
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -99,33 +119,54 @@ export async function POST(request) {
       address,
       bloodType,
       allergies,
+      currentMedications,
       medicalHistory,
       emergencyContact,
       emergencyPhone,
+      insuranceProvider,
+      insuranceNumber,
     } = body;
 
     // Validation
     if (!firstName || !lastName || !phone || !dateOfBirth) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: firstName, lastName, phone, dateOfBirth' },
         { status: 400 }
       );
     }
 
+    // Parse dateOfBirth to ensure proper timezone handling
+    let parsedDateOfBirth = null;
+    if (dateOfBirth) {
+      const dateStr = String(dateOfBirth).trim();
+      // Handle both ISO format (YYYY-MM-DD) and datetime format
+      const dateObj = new Date(`${dateStr}T00:00:00Z`);
+      if (isNaN(dateObj.getTime())) {
+        return NextResponse.json(
+          { error: 'Invalid date of birth format' },
+          { status: 400 }
+        );
+      }
+      parsedDateOfBirth = dateObj;
+    }
+
     const patient = await prisma.patient.create({
       data: {
-        firstName,
-        lastName,
-        dateOfBirth: new Date(dateOfBirth),
-        gender,
-        email,
-        phone,
-        address,
-        bloodType,
-        allergies,
-        medicalHistory,
-        emergencyContact,
-        emergencyPhone,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        dateOfBirth: parsedDateOfBirth,
+        gender: gender?.toUpperCase() || null,
+        email: email ? email.trim() : null,
+        phone: phone.trim(),
+        address: address ? address.trim() : null,
+        bloodType: bloodType || null,
+        allergies: allergies ? allergies.trim() : null,
+        currentMedications: currentMedications ? currentMedications.trim() : null,
+        medicalHistory: medicalHistory ? medicalHistory.trim() : null,
+        emergencyContact: emergencyContact ? emergencyContact.trim() : null,
+        emergencyPhone: emergencyPhone ? emergencyPhone.trim() : null,
+        insuranceProvider: insuranceProvider ? insuranceProvider.trim() : null,
+        insuranceNumber: insuranceNumber ? insuranceNumber.trim() : null,
         clinicId: user.clinicId,
       },
     });

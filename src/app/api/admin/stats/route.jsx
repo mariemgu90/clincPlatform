@@ -75,7 +75,7 @@ export async function GET(request) {
 
     // Get recent activity (last 10 actions)
     const recentUsers = await prisma.user.findMany({
-      take: 5,
+      take: 1000,
       orderBy: {
         createdAt: 'desc',
       },
@@ -88,9 +88,10 @@ export async function GET(request) {
     });
 
     const recentActivity = recentUsers.map(user => ({
-      icon: getRoleIcon(user.role),
-      action: `New ${user.role.toLowerCase()} registered`,
+      icon: getRoleIcon(user.role),  
+      role: user.role ? user.role : 'Unknown',
       user: user.name || user.email,
+      action: `New ${user.role.toLowerCase()} registered`,
       timestamp: new Date(user.createdAt).toLocaleString(),
     }));
 

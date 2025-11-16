@@ -71,19 +71,40 @@ export async function POST(request) {
       );
     }
 
+    // Validate permissions exist if provided
+    if (permissions && Array.isArray(permissions) && permissions.length > 0) {
+      const existingPermissions = await prisma.permission.findMany({
+        where: {
+          name: {
+            in: permissions,
+          },
+        },
+      });
+
+      const existingPermissionNames = existingPermissions.map(p => p.name);
+      const missingPermissions = permissions.filter(p => !existingPermissionNames.includes(p));
+
+      if (missingPermissions.length > 0) {
+        return NextResponse.json(
+          { error: `Permissions not found: ${missingPermissions.join(', ')}. Please seed the database with permissions first.` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create role with permissions
     const role = await prisma.role.create({
       data: {
         name,
         description,
         color: color || 'indigo',
-        permissions: {
+        permissions: permissions && Array.isArray(permissions) && permissions.length > 0 ? {
           create: permissions.map(permissionName => ({
             permission: {
               connect: { name: permissionName },
             },
           })),
-        },
+        } : undefined,
       },
       include: {
         permissions: {
@@ -107,8 +128,11 @@ export async function POST(request) {
     return NextResponse.json(formattedRole, { status: 201 });
   } catch (error) {
     console.error('Failed to create role:', error);
+    
+    // Return detailed error message
+    const errorMessage = error.message || 'Failed to create role';
     return NextResponse.json(
-      { error: 'Failed to create role' },
+      { error: errorMessage, message: errorMessage },
       { status: 500 }
     );
   }

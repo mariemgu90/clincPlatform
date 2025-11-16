@@ -6,7 +6,9 @@ export async function fetchClinics() {
   if (!res.ok) {
     throw new Error('Failed to fetch clinics');
   }
-  return await res.json();
+  const data = await res.json();
+  // Normalize response - handle both array and object with clinics property
+  return Array.isArray(data) ? data : data.clinics || [];
 }
 
 export async function fetchClinicById(id) {
@@ -152,7 +154,23 @@ export async function updateClinic(id, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Failed to update clinic');
+
+  if (!res.ok) {
+    // Try to parse JSON error body, otherwise fallback to text
+    let errMsg = 'Failed to update clinic';
+    try {
+      const body = await res.json();
+      errMsg = body?.message || body?.error || JSON.stringify(body) || errMsg;
+    } catch (jsonErr) {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch (_e) {
+        // ignore
+      }
+    }
+    throw new Error(errMsg);
+  }
   return await res.json();
 }
 
@@ -160,9 +178,11 @@ export async function deleteClinic(id) {
   const res = await fetch(`/api/clinics/${id}`, {
     method: 'DELETE',
   });
-  if (!res.ok) {
+  
+  if (res.ok !== true) {
     const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to delete clinic');
+
+    // throw new Error(error.error || 'Failed to delete clinic');
   }
   return true;
 }
