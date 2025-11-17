@@ -26,8 +26,7 @@ MedFlow is a comprehensive SaaS platform for clinics and physicians to manage pa
 ### Installation
 
 ```bash
-# Navigate to project directory
-cd /home/bilel/Downloads/frontier/frontier-project
+
 
 # Install dependencies (if not already done)
 npm install
