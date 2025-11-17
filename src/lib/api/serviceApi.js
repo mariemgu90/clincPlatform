@@ -96,7 +96,8 @@ export async function deleteService(id) {
   });
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to delete service');
+    const errorMessage = error.message || error.error || 'Failed to delete service';
+    throw new Error(errorMessage);
   }
   return true;
 }

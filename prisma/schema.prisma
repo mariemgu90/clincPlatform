@@ -156,8 +156,6 @@ model Service {
   id          String   @id @default(cuid())
   name        String
   description String?
-  duration    Int      // Duration in minutes
-  price       Float
   active      Boolean  @default(true)
   
   clinicId    String?

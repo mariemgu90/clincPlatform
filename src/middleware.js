@@ -8,7 +8,7 @@ const roleAccess = {
   '/dashboard': ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
   '/patients': ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
   '/patients/*': ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
-  '/calendar': ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
+  '/calendar': [ 'DOCTOR', 'RECEPTIONIST'],
   '/consultations': ['ADMIN', 'DOCTOR'],
   '/consultations/*': ['ADMIN', 'DOCTOR'],
   '/prescriptions': ['ADMIN', 'DOCTOR'],

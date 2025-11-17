@@ -43,8 +43,6 @@ export default function ServicesManagement() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    duration: 30,
-    price: 0,
     active: true,
   });
 
@@ -69,8 +67,6 @@ export default function ServicesManagement() {
     setFormData({
       name: service.name,
       description: service.description || '',
-      duration: service.duration,
-      price: service.price,
       active: service.active,
     });
     setShowModal(true);
@@ -84,7 +80,7 @@ export default function ServicesManagement() {
   const handleModalClose = () => {
     setShowModal(false);
     setEditingService(null);
-    setFormData({ name: '', description: '', duration: 30, price: 0, active: true });
+    setFormData({ name: '', description: '', active: true });
   };
 
   if (loading) {
@@ -106,7 +102,7 @@ export default function ServicesManagement() {
                 Services Management
               </h1>
               <p className="text-white/90">
-                Configure medical services and pricing
+                Configure medical services
               </p>
             </div>
             <button
@@ -179,32 +175,7 @@ export default function ServicesManagement() {
                   placeholder="Service description..."
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-2">Duration (min) *</label>
-                  <input
-                    type="number"
-                    required
-                    min="5"
-                    step="5"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-2">Price ($) *</label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
-                  />
-                </div>
-              </div>
+            
               <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"

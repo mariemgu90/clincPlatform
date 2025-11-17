@@ -786,7 +786,7 @@ export default function ClinicDetailPage() {
                             />
                             <div className="flex-1">
                               <p className="font-semibold text-slate-900">{service.name}</p>
-                              <p className="text-sm text-slate-600">{service.category} • ${service.price}</p>
+                              <p className="text-sm text-slate-600">{service.category}</p>
                             </div>
                           </label>
                         ))}
@@ -909,7 +909,7 @@ export default function ClinicDetailPage() {
                             />
                             <div className="flex-1">
                               <p className="font-semibold text-slate-900">{service.name}</p>
-                              <p className="text-sm text-slate-600">{service.category} • ${service.price}</p>
+                              <p className="text-sm text-slate-600">{service.category}</p>
                             </div>
                           </label>
                         ))}

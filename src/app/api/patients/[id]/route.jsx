@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
  *   "delete": { "summary": "Delete patient", "responses": { "200": { "description": "Deleted" } } }
  * }
  */
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma.jsx';
 import { getCurrentUser } from '@/lib/auth';
 
 // GET /api/patients/[id] - Get a single patient

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma.jsx';
 
 /**
  * GET /api/services
@@ -68,12 +68,12 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { name, description, duration, price, active, clinicId } = body;
+    const { name, description, active, clinicId } = body;
 
     // Validation
-    if (!name || !duration || price === undefined) {
+    if (!name) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, duration, price' },
+        { error: 'Missing required fields: name' },
         { status: 400 }
       );
     }
@@ -82,8 +82,6 @@ export async function POST(request) {
       data: {
         name,
         description: description || null,
-        duration: parseInt(duration),
-        price: parseFloat(price),
         active: active !== undefined ? active : true,
         clinicId: clinicId || null,
       },
