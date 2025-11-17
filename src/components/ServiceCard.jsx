@@ -20,20 +20,6 @@ export default function ServiceCard({ service, onViewDetails, index }) {
               {service.category}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="flex items-center gap-1 text-slate-600 font-medium">
-              <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {service.duration}
-            </span>
-            <span className="flex items-center gap-1 font-bold text-lg text-emerald-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {service.price + ' TND'}
-            </span>
-          </div>
         </div>
         <button
           className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-600 transition-all shadow-md hover:shadow-lg text-sm"

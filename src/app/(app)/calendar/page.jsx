@@ -476,7 +476,6 @@ export default function CalendarPage() {
                     <div className="p-4 bg-purple-50 rounded-lg">
                       <p className="text-sm text-purple-600 mb-1">Service</p>
                       <p className="font-medium text-gray-800">{selectedAppointment.service.name}</p>
-                      <p className="text-sm text-gray-600 mt-1">Duration: {selectedAppointment.service.duration} minutes</p>
                     </div>
                   ) : (
                     <div className="p-4 bg-purple-50 rounded-lg">

@@ -97,9 +97,8 @@ export default function BookAppointmentPage() {
     setSubmitting(true);
 
     try {
-      // Calculate endTime based on service duration (default 30 minutes)
-      const selectedServiceData = services.find((s) => s.id === selectedService);
-      const durationMinutes = selectedServiceData?.duration || 30;
+      // Calculate endTime based on default 30 minutes duration
+      const durationMinutes = 30;
       const startDateTime = new Date(`${selectedDate}T${selectedTime}`);
       const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
 
@@ -265,10 +264,6 @@ export default function BookAppointmentPage() {
                     >
                       <h3 className="text-lg font-bold text-gray-800 mb-2">{service.name}</h3>
                       <p className="text-sm text-gray-600 mb-3">{service.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-purple-600 font-bold">${service.price}</span>
-                        <span className="text-gray-500 text-sm">{service.duration} min</span>
-                      </div>
                     </div>
                   ))}
                 </div>

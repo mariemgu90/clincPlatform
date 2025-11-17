@@ -21,17 +21,6 @@ export default function ServiceItemCard({ service, onEdit, onDelete }) {
         <p className="text-slate-600 text-sm mb-4">{service.description}</p>
       )}
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
-          <p className="text-emerald-600 text-xs mb-1 font-semibold">Duration</p>
-          <p className="text-slate-900 font-bold">{service.duration} min</p>
-        </div>
-        <div className="p-3 rounded-xl bg-teal-50 border border-teal-100">
-          <p className="text-teal-600 text-xs mb-1 font-semibold">Price</p>
-          <p className="text-slate-900 font-bold">{service.price + ' TND'}</p>
-        </div>
-      </div>
-
       <div className="flex gap-2">
         <button
           onClick={() => onEdit(service)}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import prisma from '@/lib/prisma';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import prisma from '@/lib/prisma.jsx';
 
 /**
  * GET /api/services/[id]
@@ -65,7 +65,7 @@ export async function PUT(request, { params }) {
 
     const { id } = params;
     const body = await request.json();
-    const { name, description, duration, price, active, clinicId } = body;
+    const { name, description, active, clinicId } = body;
 
     // Check if service exists
     const existingService = await prisma.service.findUnique({
@@ -80,8 +80,6 @@ export async function PUT(request, { params }) {
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description || null;
-    if (duration !== undefined) updateData.duration = parseInt(duration);
-    if (price !== undefined) updateData.price = parseFloat(price);
     if (active !== undefined) updateData.active = active;
     if (clinicId !== undefined) updateData.clinicId = clinicId || null;
 

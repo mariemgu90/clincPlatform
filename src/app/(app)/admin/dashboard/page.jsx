@@ -227,7 +227,7 @@ export default function AdminDashboard() {
                   onClick={() => router.push('/admin/services')}
                   icon="🔧"
                   label="Manage Services"
-                  description="Configure medical services and pricing"
+                  description="Configure medical services"
                 />
                 <ActionButton
                   onClick={() => router.push('/admin/settings')}

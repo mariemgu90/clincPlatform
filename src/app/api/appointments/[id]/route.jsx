@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma.jsx';
 import { getCurrentUser } from '@/lib/auth';
 
 // GET /api/appointments/[id]

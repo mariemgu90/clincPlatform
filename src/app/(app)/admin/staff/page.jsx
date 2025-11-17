@@ -60,11 +60,16 @@ const [showEditModal, setShowEditModal] = useState(false);
   };
 
   const fetchRolesData = async () => {
-          const data = await fetchRoles();
-          
-      setRoles(data);
-
-
+    try {
+      const data = await fetchRoles();
+      // Filter to only show UserRole enum values for staff management
+      const staffRoles = data.filter(role => 
+        ['ADMIN', 'DOCTOR', 'RECEPTIONIST'].includes(role.name)
+      );
+      setRoles(staffRoles);
+    } catch (error) {
+      console.error('Failed to fetch roles:', error);
+    }
   };
 
   const fetchClinicsData = async () => {

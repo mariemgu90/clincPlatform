@@ -151,10 +151,12 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
   useEffect(() => {
     if (watchedServiceId && watchedStartTime) {
       const service = filteredServices.find(s => s.id === watchedServiceId);
-      if (service && service.duration) {
+      if (service) {
+        // Default to 30 minutes if no duration specified
+        const defaultDuration = 30;
         const [hours, minutes] = watchedStartTime.split(':').map(Number);
         const startMinutes = hours * 60 + minutes;
-        const endMinutes = startMinutes + service.duration;
+        const endMinutes = startMinutes + defaultDuration;
         const endHours = Math.floor(endMinutes / 60);
         const endMins = endMinutes % 60;
         const endTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
@@ -301,7 +303,7 @@ export default function AppointmentForm({ appointment = null, preselectedDate = 
           ) : (
             filteredServices.map(service => (
               <option key={service.id} value={service.id}>
-                {service.name} - {service.duration} min - ${service.price}
+                {service.name}
               </option>
             ))
           )}

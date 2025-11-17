@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma.jsx';
 import { notifyNewInvoice, notifyPaymentReceived } from '@/lib/notificationService';
 
 export async function GET(request) {
