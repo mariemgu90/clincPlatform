@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: next-config
+data:
+  # Non-sensitive configuration
+  DATABASE_URL: "file:/app/prisma/dev.db"
+  NEXTAUTH_URL: "http://medflow.local"
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_example"

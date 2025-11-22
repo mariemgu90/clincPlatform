@@ -1,6 +1,4 @@
-"use client";
-
-import React from 'react';
+'use client';
 
 export default function CardClinicInfo({
   clinic,
@@ -9,22 +7,15 @@ export default function CardClinicInfo({
   allServices = [],
   onView,
   onDelete,
-  staffCountProp, // optional server-provided counts
-  patientCountProp,
-  servicesCountProp,
+
 }) {
+  
   // Prefer server-provided counts when available, otherwise fall back to local filtering
-  const staffCount = typeof staffCountProp === 'number'
-    ? staffCountProp
-    : (allStaff || []).filter(s => s.clinic === clinic.id || s.clinicId === clinic.id).length;
+  const staffCount =  (allStaff || []).filter(s => s.clinic === clinic.id || s.clinicId === clinic.id).length;
 
-  const patientsCount = typeof patientCountProp === 'number'
-    ? patientCountProp
-    : (patients || []).filter(p => p.clinicId === clinic.id || p.clinic === clinic.id).length;
+  const patientsCount = (patients || []).filter(p => p.clinicId === clinic.id || p.clinic === clinic.id).length;
 
-  const servicesCount = typeof servicesCountProp === 'number'
-    ? servicesCountProp
-    : (allServices || []).filter(s => s.clinic === clinic.id || s.clinicId === clinic.id).length;
+  const servicesCount = (allServices || []).filter(s => s.clinic === clinic.id || s.clinicId === clinic.id).length;
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200 hover:shadow-xl transition-all">

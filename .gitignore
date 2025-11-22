@@ -44,4 +44,4 @@ next-env.d.ts
 # *.md
 
 # # But do NOT ignore README.md
-# !README.md
+# !README.mdprisma/prisma/dev.db

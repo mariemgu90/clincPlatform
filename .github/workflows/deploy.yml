@@ -1,0 +1,87 @@
+name: CI/CD Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker registry
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_USERNAME }}/clinicplatform:${{ github.sha }}
+            ${{ secrets.REGISTRY_USERNAME }}/clinicplatform:latest
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: '1.30.0'
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          echo "$KUBE_CONFIG_DATA" | base64 --decode > kubeconfig
+          mkdir -p $HOME/.kube
+          mv kubeconfig $HOME/.kube/config
+
+      - name: Deploy to Kubernetes (apply + set image)
+        env:
+          IMAGE: ${{ secrets.REGISTRY_USERNAME }}/clinicplatform:${{ github.sha }}
+        run: |
+          kubectl apply -f k8s/ || true
+          # Update deployment image to the new build
+          kubectl set image deployment/next-deploy next-container=$IMAGE --record || true
+          kubectl rollout status deployment/next-deploy --timeout=120s || true
+      - name: Wait for ingress
+        run: |
+          # Wait up to 60s for ingress to have an address
+          n=0
+          while [ $n -lt 12 ]; do
+            addr=$(kubectl get ingress next-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            if [ -n "$addr" ]; then
+              echo "Ingress address: $addr"
+              break
+            fi
+            n=$((n+1))
+            sleep 5
+          done
+
+      - name: Smoke test (HTTP)
+        env:
+          INGRESS_HOST: medflow.local
+        run: |
+          echo "Testing HTTP on http://$INGRESS_HOST ..."
+          # try up to 6 times with 5s delay
+          i=0
+          until [ $i -ge 6 ]
+          do
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://$INGRESS_HOST || true)
+            echo "Attempt $i => HTTP $status"
+            if [ "$status" = "200" ] || [ "$status" = "302" ] || [ "$status" = "301" ]; then
+              echo "Smoke test passed (HTTP $status)"
+              exit 0
+            fi
+            i=$((i+1))
+            sleep 5
+          done
+          echo "Smoke test failed: no HTTP 200/3xx response from $INGRESS_HOST" >&2
+          exit 1

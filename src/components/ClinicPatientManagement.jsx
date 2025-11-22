@@ -5,19 +5,18 @@ import PatientCard from './PatientCard';
 
 export default function ClinicPatientManagement({ 
   patients, 
-  clinicId, 
   onViewPatientDetails 
 }) {
   const [searchPatientTerm, setSearchPatientTerm] = useState('');
   const [filterPatientGender, setFilterPatientGender] = useState('all');
 
-  const clinicPatients = patients.filter(p => p.clinicId === clinicId);
+  const clinicPatients = patients;
    const statspatients = [
     {
-      icon: "👥",
-      title: "Total Patients",
+      icon: '👥',
+      title: 'Total Patients',
       value: clinicPatients.length,
-      gradient: "from-teal-500 to-teal-600",
+      gradient: 'from-teal-500 to-teal-600',
       svg: (
         <path
           strokeLinecap="round"
@@ -28,10 +27,10 @@ export default function ClinicPatientManagement({
       ),
     },
     {
-      icon: "✅",
-      title: "Active Patients",
-      value: clinicPatients.filter((p) => p.status === "Active").length,
-      gradient: "from-emerald-500 to-emerald-600",
+      icon: '✅',
+      title: 'Active Patients',
+      value: clinicPatients.filter((p) => p.status === 'Active').length,
+      gradient: 'from-emerald-500 to-emerald-600',
       svg: (
         <path
           strokeLinecap="round"
@@ -42,10 +41,10 @@ export default function ClinicPatientManagement({
       ),
     },
     {
-      icon: "👨",
-      title: "Male Patients",
-      value: clinicPatients.filter((p) => p.gender === "Male").length,
-      gradient: "from-blue-500 to-blue-600",
+      icon: '👨',
+      title: 'Male Patients',
+      value: clinicPatients.filter((p) => p.gender === 'Male').length,
+      gradient: 'from-blue-500 to-blue-600',
       svg: (
         <path
           strokeLinecap="round"
@@ -56,10 +55,10 @@ export default function ClinicPatientManagement({
       ),
     },
     {
-      icon: "👩",
-      title: "Female Patients",
-      value: clinicPatients.filter((p) => p.gender === "Female").length,
-      gradient: "from-pink-500 to-pink-600",
+      icon: '👩',
+      title: 'Female Patients',
+      value: clinicPatients.filter((p) => p.gender === 'Female').length,
+      gradient: 'from-pink-500 to-pink-600',
       svg: (
         <path
           strokeLinecap="round"
@@ -193,7 +192,7 @@ export default function ClinicPatientManagement({
             <PatientCard 
               key={patient.id}
               patient={patient}
-              onViewDetails={onViewPatientDetails}
+              onViewDetails={() => { onViewPatientDetails(patient.id); }}
             />
           ))
         )}

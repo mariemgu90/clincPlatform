@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "devall":"prisma generate && prisma db push && node prisma/seed.js && npx concurrently \"next dev\" \"prisma studio\"",
+    "devall": "prisma generate && prisma db push && node prisma/seed.js && npx concurrently \"next dev\" \"prisma studio\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -17,7 +17,11 @@
     "setup": "npm install && prisma generate && prisma db push && node prisma/seed.js",
     "dev:full": "prisma generate && next dev",
     "dev:all": "prisma generate && prisma db push && node prisma/seed.js && npx concurrently \"next dev\" \"prisma studio\"",
-    "generate:openapi": "node scripts/generate-openapi.js"
+    "generate:openapi": "node scripts/generate-openapi.js",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -31,7 +35,7 @@
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
     "next": "16.0.1",
-    "next-auth": "^4.24.13",
+    "next-auth": "^4.24.7",
     "prisma": "^6.19.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
@@ -41,6 +45,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.48.2",
     "@tailwindcss/postcss": "^4",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",

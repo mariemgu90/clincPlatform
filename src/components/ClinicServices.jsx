@@ -3,8 +3,7 @@
 import ServiceCard from './ServiceCard';
 
 export default function ClinicServices({ 
-  allServices, 
-  clinicId, 
+  // allServices,
   onEditServiceList, 
   onAddServices,
   onViewServiceDetails,
