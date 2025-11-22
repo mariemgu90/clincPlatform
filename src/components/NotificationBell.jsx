@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { 
@@ -18,24 +18,29 @@ export default function NotificationBell() {
   
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     if (!session?.user?.id) return;
     
     try {
       setLoading(true);
       const data = await fetchNotifications({ limit: 10 });
       setNotifications(data);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.id]);
+  
+  // Load notifications when component mounts or session changes
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
 
   const markAsRead = async (id) => {
     try {
       await markNotificationAsRead(id);
-      setNotifications(notifications.map(n => 
+      setNotifications(prev => prev.map(n => 
         n.id === id ? { ...n, read: true } : n
       ));
     } catch (_error) {
@@ -46,7 +51,7 @@ export default function NotificationBell() {
   const markAllAsRead = async () => {
     try {
       await markAllNotificationsAsRead();
-      setNotifications(notifications.map(n => ({ ...n, read: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (_error) {
       toast.error('Failed to mark all as read');
     }
@@ -55,7 +60,7 @@ export default function NotificationBell() {
   const handleDeleteNotification = async (id) => {
     try {
       await deleteNotification(id);
-      setNotifications(notifications.filter(n => n.id !== id));
+      setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (_error) {
       toast.error('Failed to delete notification');
     }

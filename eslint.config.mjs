@@ -34,7 +34,7 @@ export default [
       'react/jsx-uses-vars': 'error',
       'react/react-in-jsx-scope': 'off', // Not needed in Next.js 13+
       'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
-      'quotes': ['warn', 'single', { 'avoidEscape': true }],
+      'quotes': ['warn', 'single', { avoidEscape: true }],
       'semi': ['warn', 'always'],
     },
   },
