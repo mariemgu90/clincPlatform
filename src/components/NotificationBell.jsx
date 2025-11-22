@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { 
@@ -13,48 +13,55 @@ import {
 export default function NotificationBell() {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     if (!session?.user?.id) return;
     
     try {
       setLoading(true);
       const data = await fetchNotifications({ limit: 10 });
       setNotifications(data);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.id]);
+  
+  // Load notifications when component mounts or session changes
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
 
-  const handleMarkAsRead = async (id) => {
+  const markAsRead = async (id) => {
     try {
       await markNotificationAsRead(id);
-      setNotifications(notifications.map(n => 
+      setNotifications(prev => prev.map(n => 
         n.id === id ? { ...n, read: true } : n
       ));
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to mark notification as read');
     }
   };
 
-  const handleMarkAllAsRead = async () => {
+  const markAllAsRead = async () => {
     try {
       await markAllNotificationsAsRead();
-      setNotifications(notifications.map(n => ({ ...n, read: true })));
-    } catch (error) {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (_error) {
       toast.error('Failed to mark all as read');
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteNotification = async (id) => {
     try {
       await deleteNotification(id);
-      setNotifications(notifications.filter(n => n.id !== id));
-    } catch (error) {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (_error) {
       toast.error('Failed to delete notification');
     }
   };
@@ -154,7 +161,7 @@ export default function NotificationBell() {
                             {notification.title}
                           </h4>
                           <button
-                            onClick={() => deleteNotification(notification.id)}
+                            onClick={() => handleDeleteNotification(notification.id)}
                             className="text-slate-400 hover:text-red-500 flex-shrink-0"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
